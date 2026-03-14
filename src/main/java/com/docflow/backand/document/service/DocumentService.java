@@ -1,6 +1,7 @@
 package com.docflow.backand.document.service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,11 @@ public class DocumentService {
 
     public List<Document> getAllDocuments() {
         return documentRepository.findAll();
+    }
+
+    public Document getDocumentById(Long id) {
+        return documentRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Document not found with id: " + id));
     }
 
     public Document createDocument(String title, String content, Long createdById) {

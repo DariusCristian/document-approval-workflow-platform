@@ -1,9 +1,17 @@
 package com.docflow.backand.document.web;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public class CreateDocumentRequest {
 
+    @NotBlank
     private String title;
+
+    @NotBlank
     private String content;
+
+    @NotNull
     private Long createdById;
 
     public CreateDocumentRequest() {

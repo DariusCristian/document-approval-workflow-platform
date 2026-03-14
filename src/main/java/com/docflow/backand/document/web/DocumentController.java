@@ -2,7 +2,10 @@ package com.docflow.backand.document.web;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,8 +31,14 @@ public class DocumentController {
                 .toList();
     }
 
+    @GetMapping("/{id}")
+    public DocumentResponse getDocumentById(@PathVariable Long id) {
+        Document document = documentService.getDocumentById(id);
+        return toDocumentResponse(document);
+    }
+
     @PostMapping
-    public DocumentResponse createDocument(@RequestBody CreateDocumentRequest request) {
+    public DocumentResponse createDocument(@Valid @RequestBody CreateDocumentRequest request) {
         Document document = documentService.createDocument(
                 request.getTitle(),
                 request.getContent(),
