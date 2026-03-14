@@ -38,4 +38,23 @@ public class DocumentService {
         Document document = new Document(title, content, DocumentStatus.DRAFT, createdBy);
         return documentRepository.save(document);
     }
+
+    public Document updateStatus(Long documentId, String status) {
+        Document document = getDocumentById(documentId);
+        DocumentStatus documentStatus = parseDocumentStatus(status);
+        document.setStatus(documentStatus);
+        return documentRepository.save(document);
+    }
+
+    private DocumentStatus parseDocumentStatus(String status) {
+        if (status == null || status.isBlank()) {
+            throw new IllegalArgumentException("Invalid document status: " + status);
+        }
+
+        try {
+            return DocumentStatus.valueOf(status.trim().toUpperCase());
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Invalid document status: " + status);
+        }
+    }
 }

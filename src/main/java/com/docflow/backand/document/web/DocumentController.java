@@ -5,6 +5,7 @@ import java.util.List;
 import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,6 +45,14 @@ public class DocumentController {
                 request.getContent(),
                 request.getCreatedById());
 
+        return toDocumentResponse(document);
+    }
+
+    @PatchMapping("/{id}/status")
+    public DocumentResponse updateDocumentStatus(
+            @PathVariable Long id,
+            @RequestBody UpdateDocumentStatusRequest request) {
+        Document document = documentService.updateStatus(id, request.getStatus());
         return toDocumentResponse(document);
     }
 
