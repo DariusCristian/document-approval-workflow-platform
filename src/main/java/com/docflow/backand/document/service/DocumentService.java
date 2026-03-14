@@ -41,8 +41,15 @@ public class DocumentService {
 
     public Document updateStatus(Long documentId, String status) {
         Document document = getDocumentById(documentId);
-        DocumentStatus documentStatus = parseDocumentStatus(status);
-        document.setStatus(documentStatus);
+        DocumentStatus newStatus = parseDocumentStatus(status);
+        DocumentStatus currentStatus = document.getStatus();
+
+        if (!isAllowedTransition(currentStatus, newStatus)) {
+            throw new IllegalArgumentException(
+                    "Invalid status transition: " + currentStatus + " -> " + newStatus);
+        }
+
+        document.setStatus(newStatus);
         return documentRepository.save(document);
     }
 
@@ -56,5 +63,13 @@ public class DocumentService {
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Invalid document status: " + status);
         }
+    }
+
+    private boolean isAllowedTransition(DocumentStatus currentStatus, DocumentStatus newStatus) {
+        return switch (currentStatus) {
+            case DRAFT -> newStatus == DocumentStatus.IN_REVIEW;
+            case IN_REVIEW -> newStatus == DocumentStatus.APPROVED || newStatus == DocumentStatus.REJECTED;
+            case APPROVED, REJECTED -> false;
+        };
     }
 }

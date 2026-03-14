@@ -1,7 +1,10 @@
 package com.docflow.backand.document.web;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class UpdateDocumentStatusRequest {
 
+    @NotBlank
     private String status;
 
     public UpdateDocumentStatusRequest() {

@@ -51,7 +51,7 @@ public class DocumentController {
     @PatchMapping("/{id}/status")
     public DocumentResponse updateDocumentStatus(
             @PathVariable Long id,
-            @RequestBody UpdateDocumentStatusRequest request) {
+            @Valid @RequestBody UpdateDocumentStatusRequest request) {
         Document document = documentService.updateStatus(id, request.getStatus());
         return toDocumentResponse(document);
     }
