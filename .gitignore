@@ -1,5 +1,16 @@
-.gradle/
-build/
+# macOS
+.DS_Store
+
+# Backend build output
+backand/.gradle/
+backand/build/
+
+# Frontend build output
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
 .idea/
 out/
 *.iml
