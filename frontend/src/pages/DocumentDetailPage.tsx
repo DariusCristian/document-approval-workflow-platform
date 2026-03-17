@@ -1,0 +1,302 @@
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import {
+  createDocumentComment,
+  createDocumentDecision,
+  getDocumentById,
+  getDocumentComments,
+  getDocumentDecisions,
+} from '../api/documents'
+import type {
+  ApprovalDecision,
+  DecisionType,
+  Document,
+  DocumentComment,
+} from '../api/documents'
+
+function DocumentDetailPage() {
+  const { id } = useParams()
+  const documentId = Number(id)
+  const [document, setDocument] = useState<Document | null>(null)
+  const [comments, setComments] = useState<DocumentComment[]>([])
+  const [decisions, setDecisions] = useState<ApprovalDecision[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [authorIdInput, setAuthorIdInput] = useState('')
+  const [commentContent, setCommentContent] = useState('')
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+  const [commentErrorMessage, setCommentErrorMessage] = useState('')
+  const [decidedByIdInput, setDecidedByIdInput] = useState('')
+  const [decisionComment, setDecisionComment] = useState('')
+  const [isSubmittingDecision, setIsSubmittingDecision] = useState(false)
+  const [decisionErrorMessage, setDecisionErrorMessage] = useState('')
+
+  useEffect(() => {
+    if (!Number.isInteger(documentId) || documentId <= 0) {
+      setErrorMessage('Invalid document id.')
+      setIsLoading(false)
+      return
+    }
+
+    let isCancelled = false
+
+    const loadDocumentDetails = async () => {
+      setIsLoading(true)
+      setErrorMessage('')
+
+      try {
+        const [documentData, commentsData, decisionsData] = await Promise.all([
+          getDocumentById(documentId),
+          getDocumentComments(documentId),
+          getDocumentDecisions(documentId),
+        ])
+
+        if (!isCancelled) {
+          setDocument(documentData)
+          setComments(commentsData)
+          setDecisions(decisionsData)
+        }
+      } catch (error) {
+        if (isCancelled) {
+          return
+        }
+
+        if (error instanceof Error) {
+          setErrorMessage(error.message)
+        } else {
+          setErrorMessage('Failed to load document details.')
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void loadDocumentDetails()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [documentId])
+
+  const handleCommentSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setCommentErrorMessage('')
+
+    if (!Number.isInteger(documentId) || documentId <= 0) {
+      setCommentErrorMessage('Invalid document id.')
+      return
+    }
+
+    const parsedAuthorId = Number(authorIdInput)
+    if (!Number.isInteger(parsedAuthorId) || parsedAuthorId <= 0) {
+      setCommentErrorMessage('Author ID must be a positive number.')
+      return
+    }
+
+    const trimmedContent = commentContent.trim()
+    if (!trimmedContent) {
+      setCommentErrorMessage('Comment content is required.')
+      return
+    }
+
+    setIsSubmittingComment(true)
+
+    try {
+      await createDocumentComment(documentId, parsedAuthorId, trimmedContent)
+      const refreshedComments = await getDocumentComments(documentId)
+      setComments(refreshedComments)
+      setCommentContent('')
+    } catch (error) {
+      if (error instanceof Error) {
+        setCommentErrorMessage(error.message)
+      } else {
+        setCommentErrorMessage('Failed to create comment.')
+      }
+    } finally {
+      setIsSubmittingComment(false)
+    }
+  }
+
+  const handleDecisionSubmit = async (decision: DecisionType) => {
+    setDecisionErrorMessage('')
+
+    if (!Number.isInteger(documentId) || documentId <= 0) {
+      setDecisionErrorMessage('Invalid document id.')
+      return
+    }
+
+    const parsedDecidedById = Number(decidedByIdInput)
+    if (!Number.isInteger(parsedDecidedById) || parsedDecidedById <= 0) {
+      setDecisionErrorMessage('Decided By ID must be a positive number.')
+      return
+    }
+
+    setIsSubmittingDecision(true)
+
+    try {
+      await createDocumentDecision(
+        documentId,
+        parsedDecidedById,
+        decision,
+        decisionComment.trim() || undefined,
+      )
+
+      const [refreshedDocument, refreshedDecisions] = await Promise.all([
+        getDocumentById(documentId),
+        getDocumentDecisions(documentId),
+      ])
+
+      setDocument(refreshedDocument)
+      setDecisions(refreshedDecisions)
+      setDecisionComment('')
+    } catch (error) {
+      if (error instanceof Error) {
+        setDecisionErrorMessage(error.message)
+      } else {
+        setDecisionErrorMessage('Failed to submit decision.')
+      }
+    } finally {
+      setIsSubmittingDecision(false)
+    }
+  }
+
+  return (
+    <main>
+      <h1>Document Detail Page</h1>
+      {isLoading && <p>Loading document details...</p>}
+      {errorMessage && <p>{errorMessage}</p>}
+
+      {!isLoading && !errorMessage && document && (
+        <>
+          <p>Document ID: {document.id}</p>
+          <p>Title: {document.title}</p>
+          <p>Content: {document.content}</p>
+          <p>Status: {document.status}</p>
+          <p>Created By ID: {document.createdById}</p>
+
+          <section>
+            <h2>Comments</h2>
+            <form onSubmit={handleCommentSubmit}>
+              <div>
+                <label htmlFor="authorId">Author ID</label>
+                <input
+                  id="authorId"
+                  name="authorId"
+                  type="number"
+                  value={authorIdInput}
+                  onChange={(event) => setAuthorIdInput(event.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="content">Content</label>
+                <textarea
+                  id="content"
+                  name="content"
+                  value={commentContent}
+                  onChange={(event) => setCommentContent(event.target.value)}
+                  required
+                />
+              </div>
+
+              <button type="submit" disabled={isSubmittingComment}>
+                {isSubmittingComment ? 'Submitting comment...' : 'Add comment'}
+              </button>
+            </form>
+
+            {commentErrorMessage && <p>{commentErrorMessage}</p>}
+
+            {comments.length === 0 && <p>No comments yet.</p>}
+            {comments.length > 0 && (
+              <ul>
+                {comments.map((comment) => (
+                  <li key={comment.id}>
+                    <p>Author ID: {comment.authorId}</p>
+                    <p>Content: {comment.content}</p>
+                    <p>Created At: {comment.createdAt}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section>
+            <h2>Add Approval Decision</h2>
+            <form onSubmit={(event) => event.preventDefault()}>
+              <div>
+                <label htmlFor="decidedById">Decided By ID</label>
+                <input
+                  id="decidedById"
+                  name="decidedById"
+                  type="number"
+                  value={decidedByIdInput}
+                  onChange={(event) => setDecidedByIdInput(event.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="decisionComment">Comment (optional)</label>
+                <textarea
+                  id="decisionComment"
+                  name="decisionComment"
+                  value={decisionComment}
+                  onChange={(event) => setDecisionComment(event.target.value)}
+                />
+              </div>
+
+              <button
+                type="button"
+                disabled={isSubmittingDecision}
+                onClick={() => {
+                  void handleDecisionSubmit('APPROVE')
+                }}
+              >
+                {isSubmittingDecision ? 'Submitting decision...' : 'Approve'}
+              </button>
+
+              <button
+                type="button"
+                disabled={isSubmittingDecision}
+                onClick={() => {
+                  void handleDecisionSubmit('REJECT')
+                }}
+              >
+                {isSubmittingDecision ? 'Submitting decision...' : 'Reject'}
+              </button>
+            </form>
+
+            {decisionErrorMessage && <p>{decisionErrorMessage}</p>}
+          </section>
+
+          <section>
+            <h2>Approval Decision History</h2>
+            {decisions.length === 0 && <p>No decisions yet.</p>}
+            {decisions.length > 0 && (
+              <ul>
+                {decisions.map((decision) => (
+                  <li key={decision.id}>
+                    <p>Decision: {decision.decision}</p>
+                    <p>Decided By ID: {decision.decidedById}</p>
+                    <p>Comment: {decision.comment || '-'}</p>
+                    <p>Decided At: {decision.decidedAt}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
+      )}
+
+      <p>
+        Back to list: <Link to="/documents">Documents</Link>
+      </p>
+    </main>
+  )
+}
+
+export default DocumentDetailPage
