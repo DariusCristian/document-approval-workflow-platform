@@ -15,6 +15,9 @@ public class CreateUserRequest {
     @NotBlank
     private String roleName;
 
+    @NotBlank
+    private String password;
+
     public CreateUserRequest() {
     }
 
@@ -40,5 +43,13 @@ public class CreateUserRequest {
 
     public void setRoleName(String roleName) {
         this.roleName = roleName;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

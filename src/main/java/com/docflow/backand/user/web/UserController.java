@@ -39,7 +39,11 @@ public class UserController {
 
     @PostMapping
     public UserResponse createUser(@Valid @RequestBody CreateUserRequest request) {
-        User user = userService.createUser(request.getEmail(), request.getFullName(), request.getRoleName());
+        User user = userService.createUser(
+                request.getEmail(),
+                request.getFullName(),
+                request.getRoleName(),
+                request.getPassword());
         return toUserResponse(user);
     }
 

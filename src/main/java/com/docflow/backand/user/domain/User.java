@@ -1,9 +1,12 @@
 package com.docflow.backand.user.domain;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -12,6 +15,8 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "app_user")
 public class User {
+
+    private static final String TEMPORARY_PASSWORD_HASH = "{noop}temporary-password";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,8 +28,12 @@ public class User {
     @Column(name = "full_name", nullable = false, length = 255)
     private String fullName;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role_name", nullable = false, length = 50)
-    private String roleName;
+    private UserRole roleName;
+
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -35,7 +44,19 @@ public class User {
     public User(String email, String fullName, String roleName) {
         this.email = email;
         this.fullName = fullName;
+        this.roleName = parseRoleName(roleName);
+        this.passwordHash = TEMPORARY_PASSWORD_HASH;
+    }
+
+    public User(String email, String fullName, UserRole roleName) {
+        this(email, fullName, roleName, TEMPORARY_PASSWORD_HASH);
+    }
+
+    public User(String email, String fullName, UserRole roleName, String passwordHash) {
+        this.email = email;
+        this.fullName = fullName;
         this.roleName = roleName;
+        this.passwordHash = passwordHash;
     }
 
     public Long getId() {
@@ -51,11 +72,15 @@ public class User {
     }
 
     public String getRoleName() {
-        return roleName;
+        return roleName != null ? roleName.name() : null;
     }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
     public void setEmail(String email) {
@@ -67,6 +92,21 @@ public class User {
     }
 
     public void setRoleName(String roleName) {
+        this.roleName = parseRoleName(roleName);
+    }
+
+    public void setRoleName(UserRole roleName) {
         this.roleName = roleName;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    private UserRole parseRoleName(String roleName) {
+        if (roleName == null) {
+            return null;
+        }
+        return UserRole.valueOf(roleName.trim().toUpperCase(Locale.ROOT));
     }
 }
