@@ -33,6 +33,7 @@ export async function fetchJson<T>(
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
+    credentials: options.credentials ?? 'include',
     headers,
     body,
   })

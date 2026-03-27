@@ -28,6 +28,12 @@ export interface ApprovalDecision {
 
 export type DecisionType = 'APPROVE' | 'REJECT'
 
+interface CreateDocumentRequest {
+  title: string
+  content: string
+  createdById: number
+}
+
 export function getDocuments(): Promise<Document[]> {
   return fetchJson<Document[]>('/api/documents')
 }
@@ -41,16 +47,14 @@ export function getDocumentComments(id: number): Promise<DocumentComment[]> {
 }
 
 interface CreateDocumentCommentRequest {
-  authorId: number
   content: string
 }
 
 export function createDocumentComment(
   id: number,
-  authorId: number,
   content: string,
 ): Promise<DocumentComment> {
-  const payload: CreateDocumentCommentRequest = { authorId, content }
+  const payload: CreateDocumentCommentRequest = { content }
 
   return fetchJson<DocumentComment>(`/api/documents/${id}/comments`, {
     method: 'POST',
@@ -63,19 +67,16 @@ export function getDocumentDecisions(id: number): Promise<ApprovalDecision[]> {
 }
 
 interface CreateDocumentDecisionRequest {
-  decidedById: number
   decision: DecisionType
   comment?: string
 }
 
 export function createDocumentDecision(
   id: number,
-  decidedById: number,
   decision: DecisionType,
   comment?: string,
 ): Promise<ApprovalDecision> {
   const payload: CreateDocumentDecisionRequest = {
-    decidedById,
     decision,
   }
 
@@ -84,6 +85,19 @@ export function createDocumentDecision(
   }
 
   return fetchJson<ApprovalDecision>(`/api/documents/${id}/decisions`, {
+    method: 'POST',
+    body: payload,
+  })
+}
+
+export function createDocument(
+  title: string,
+  content: string,
+  createdById: number,
+): Promise<Document> {
+  const payload: CreateDocumentRequest = { title, content, createdById }
+
+  return fetchJson<Document>('/api/documents', {
     method: 'POST',
     body: payload,
   })

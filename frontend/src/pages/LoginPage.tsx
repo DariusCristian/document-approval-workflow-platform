@@ -2,9 +2,11 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../api/auth'
+import { useAuth } from '../app/AuthContext'
 
 function LoginPage() {
   const navigate = useNavigate()
+  const { setCurrentUser } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -18,7 +20,12 @@ function LoginPage() {
     setErrorMessage('')
 
     try {
-      await login(email, password)
+      const loginResponse = await login(email, password)
+      setCurrentUser({
+        userId: loginResponse.userId,
+        email: loginResponse.email,
+        role: loginResponse.role,
+      })
       setSuccessMessage('Login successful. Redirecting to documents...')
       navigate('/documents')
     } catch (error) {

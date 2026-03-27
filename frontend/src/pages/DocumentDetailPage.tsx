@@ -14,8 +14,10 @@ import type {
   Document,
   DocumentComment,
 } from '../api/documents'
+import { useAuth } from '../app/AuthContext'
 
 function DocumentDetailPage() {
+  const { currentUser } = useAuth()
   const { id } = useParams()
   const documentId = Number(id)
   const [document, setDocument] = useState<Document | null>(null)
@@ -23,11 +25,9 @@ function DocumentDetailPage() {
   const [decisions, setDecisions] = useState<ApprovalDecision[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
-  const [authorIdInput, setAuthorIdInput] = useState('')
   const [commentContent, setCommentContent] = useState('')
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [commentErrorMessage, setCommentErrorMessage] = useState('')
-  const [decidedByIdInput, setDecidedByIdInput] = useState('')
   const [decisionComment, setDecisionComment] = useState('')
   const [isSubmittingDecision, setIsSubmittingDecision] = useState(false)
   const [decisionErrorMessage, setDecisionErrorMessage] = useState('')
@@ -90,9 +90,8 @@ function DocumentDetailPage() {
       return
     }
 
-    const parsedAuthorId = Number(authorIdInput)
-    if (!Number.isInteger(parsedAuthorId) || parsedAuthorId <= 0) {
-      setCommentErrorMessage('Author ID must be a positive number.')
+    if (!currentUser) {
+      setCommentErrorMessage('You must be logged in to add a comment.')
       return
     }
 
@@ -105,7 +104,7 @@ function DocumentDetailPage() {
     setIsSubmittingComment(true)
 
     try {
-      await createDocumentComment(documentId, parsedAuthorId, trimmedContent)
+      await createDocumentComment(documentId, trimmedContent)
       const refreshedComments = await getDocumentComments(documentId)
       setComments(refreshedComments)
       setCommentContent('')
@@ -128,9 +127,8 @@ function DocumentDetailPage() {
       return
     }
 
-    const parsedDecidedById = Number(decidedByIdInput)
-    if (!Number.isInteger(parsedDecidedById) || parsedDecidedById <= 0) {
-      setDecisionErrorMessage('Decided By ID must be a positive number.')
+    if (!currentUser) {
+      setDecisionErrorMessage('You must be logged in to submit a decision.')
       return
     }
 
@@ -139,7 +137,6 @@ function DocumentDetailPage() {
     try {
       await createDocumentDecision(
         documentId,
-        parsedDecidedById,
         decision,
         decisionComment.trim() || undefined,
       )
@@ -181,18 +178,6 @@ function DocumentDetailPage() {
             <h2>Comments</h2>
             <form onSubmit={handleCommentSubmit}>
               <div>
-                <label htmlFor="authorId">Author ID</label>
-                <input
-                  id="authorId"
-                  name="authorId"
-                  type="number"
-                  value={authorIdInput}
-                  onChange={(event) => setAuthorIdInput(event.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
                 <label htmlFor="content">Content</label>
                 <textarea
                   id="content"
@@ -203,11 +188,15 @@ function DocumentDetailPage() {
                 />
               </div>
 
-              <button type="submit" disabled={isSubmittingComment}>
+              <button
+                type="submit"
+                disabled={isSubmittingComment || !currentUser}
+              >
                 {isSubmittingComment ? 'Submitting comment...' : 'Add comment'}
               </button>
             </form>
 
+            {!currentUser && <p>You must be logged in to add a comment.</p>}
             {commentErrorMessage && <p>{commentErrorMessage}</p>}
 
             {comments.length === 0 && <p>No comments yet.</p>}
@@ -228,18 +217,6 @@ function DocumentDetailPage() {
             <h2>Add Approval Decision</h2>
             <form onSubmit={(event) => event.preventDefault()}>
               <div>
-                <label htmlFor="decidedById">Decided By ID</label>
-                <input
-                  id="decidedById"
-                  name="decidedById"
-                  type="number"
-                  value={decidedByIdInput}
-                  onChange={(event) => setDecidedByIdInput(event.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
                 <label htmlFor="decisionComment">Comment (optional)</label>
                 <textarea
                   id="decisionComment"
@@ -251,7 +228,7 @@ function DocumentDetailPage() {
 
               <button
                 type="button"
-                disabled={isSubmittingDecision}
+                disabled={isSubmittingDecision || !currentUser}
                 onClick={() => {
                   void handleDecisionSubmit('APPROVE')
                 }}
@@ -261,7 +238,7 @@ function DocumentDetailPage() {
 
               <button
                 type="button"
-                disabled={isSubmittingDecision}
+                disabled={isSubmittingDecision || !currentUser}
                 onClick={() => {
                   void handleDecisionSubmit('REJECT')
                 }}
@@ -270,6 +247,7 @@ function DocumentDetailPage() {
               </button>
             </form>
 
+            {!currentUser && <p>You must be logged in to submit a decision.</p>}
             {decisionErrorMessage && <p>{decisionErrorMessage}</p>}
           </section>
 
