@@ -40,10 +40,10 @@ DRAFT ──(author submits)──> IN_REVIEW ──(reviewer/admin decides)─�
 
 ```text
 .
-├── backend/                     Spring Boot app (Java package: com.docflow.backand)
+├── backend/                     Spring Boot app (Java package: com.docflow.backend)
 │   ├── build.gradle
 │   └── src/main/
-│       ├── java/com/docflow/backand/
+│       ├── java/com/docflow/backend/
 │       │   ├── approval/        approval decisions (domain, repository, service, web)
 │       │   ├── auth/web/        login, logout, /me, CSRF token endpoint
 │       │   ├── comment/         document comments
