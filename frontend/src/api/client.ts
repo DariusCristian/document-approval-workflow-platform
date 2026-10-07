@@ -3,12 +3,33 @@ export const API_BASE_URL = ''
 
 interface FetchJsonOptions extends Omit<RequestInit, 'body'> {
   body?: unknown
+  // Set for requests that handle 401 themselves (login with a wrong password, the session check on load).
+  skipUnauthorizedHandler?: boolean
+}
+
+// An error response from the API, with its HTTP status (e.g. 401, 403) and the server's message.
+export class ApiError extends Error {
+  readonly status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
+let unauthorizedHandler: (() => void) | null = null
+
+// Called whenever a request gets 401 (the session expired or is missing). Set by AuthProvider.
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  unauthorizedHandler = handler
 }
 
 export async function fetchJson<T>(
   path: string,
   options: FetchJsonOptions = {},
 ): Promise<T> {
+  const { skipUnauthorizedHandler, ...requestOptions } = options
   const headers = new Headers(options.headers)
   headers.set('Accept', 'application/json')
 
@@ -33,7 +54,7 @@ export async function fetchJson<T>(
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
+    ...requestOptions,
     credentials: options.credentials ?? 'include',
     headers,
     body,
@@ -56,7 +77,11 @@ export async function fetchJson<T>(
       }
     }
 
-    throw new Error(errorMessage)
+    if (response.status === 401 && !skipUnauthorizedHandler) {
+      unauthorizedHandler?.()
+    }
+
+    throw new ApiError(response.status, errorMessage)
   }
 
   const responseText = await response.text()

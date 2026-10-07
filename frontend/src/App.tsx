@@ -30,10 +30,10 @@ function ProtectedRoute() {
 
 function ProtectedLayout() {
   const navigate = useNavigate()
-  const { clearCurrentUser, currentUser } = useAuth()
+  const { logout, currentUser } = useAuth()
 
-  const handleLogout = () => {
-    clearCurrentUser()
+  const handleLogout = async () => {
+    await logout()
     navigate('/login', { replace: true })
   }
 
@@ -49,7 +49,12 @@ function ProtectedLayout() {
             Signed in as {currentUser.email} ({currentUser.role})
           </p>
         )}
-        <button type="button" onClick={handleLogout}>
+        <button
+          type="button"
+          onClick={() => {
+            void handleLogout()
+          }}
+        >
           Logout
         </button>
       </header>
@@ -59,6 +64,13 @@ function ProtectedLayout() {
 }
 
 function App() {
+  const { isCheckingSession } = useAuth()
+
+  // Wait for the session check, so routes don't briefly show the wrong page.
+  if (isCheckingSession) {
+    return <p>Loading...</p>
+  }
+
   return (
     <Routes>
       <Route path="/" element={<RootRedirect />} />

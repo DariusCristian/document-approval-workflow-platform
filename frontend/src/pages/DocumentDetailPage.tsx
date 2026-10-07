@@ -181,6 +181,14 @@ function DocumentDetailPage() {
     }
   }
 
+  const isAuthor = document !== null && currentUser !== null && document.createdById === currentUser.id
+  const canSubmitForReview = isAuthor && document?.status === 'DRAFT'
+  // Four-eyes rule: reviewers and admins decide, but never on their own document.
+  const canDecide =
+    (currentUser?.role === 'REVIEWER' || currentUser?.role === 'ADMIN') &&
+    !isAuthor &&
+    document?.status === 'IN_REVIEW'
+
   return (
     <main>
       <h1>Document Detail Page</h1>
@@ -195,7 +203,7 @@ function DocumentDetailPage() {
           <p>Status: {document.status}</p>
           <p>Created By ID: {document.createdById}</p>
 
-          {document.status === 'DRAFT' && (
+          {canSubmitForReview && (
             <>
               <button
                 type="button"
@@ -249,43 +257,45 @@ function DocumentDetailPage() {
             )}
           </section>
 
-          <section>
-            <h2>Add Approval Decision</h2>
-            <form onSubmit={(event) => event.preventDefault()}>
-              <div>
-                <label htmlFor="decisionComment">Comment (optional)</label>
-                <textarea
-                  id="decisionComment"
-                  name="decisionComment"
-                  value={decisionComment}
-                  onChange={(event) => setDecisionComment(event.target.value)}
-                />
-              </div>
+          {canDecide && (
+            <section>
+              <h2>Add Approval Decision</h2>
+              <form onSubmit={(event) => event.preventDefault()}>
+                <div>
+                  <label htmlFor="decisionComment">Comment (optional)</label>
+                  <textarea
+                    id="decisionComment"
+                    name="decisionComment"
+                    value={decisionComment}
+                    onChange={(event) => setDecisionComment(event.target.value)}
+                  />
+                </div>
 
-              <button
-                type="button"
-                disabled={isSubmittingDecision || !currentUser}
-                onClick={() => {
-                  void handleDecisionSubmit('APPROVE')
-                }}
-              >
-                {isSubmittingDecision ? 'Submitting decision...' : 'Approve'}
-              </button>
+                <button
+                  type="button"
+                  disabled={isSubmittingDecision || !currentUser}
+                  onClick={() => {
+                    void handleDecisionSubmit('APPROVE')
+                  }}
+                >
+                  {isSubmittingDecision ? 'Submitting decision...' : 'Approve'}
+                </button>
 
-              <button
-                type="button"
-                disabled={isSubmittingDecision || !currentUser}
-                onClick={() => {
-                  void handleDecisionSubmit('REJECT')
-                }}
-              >
-                {isSubmittingDecision ? 'Submitting decision...' : 'Reject'}
-              </button>
-            </form>
+                <button
+                  type="button"
+                  disabled={isSubmittingDecision || !currentUser}
+                  onClick={() => {
+                    void handleDecisionSubmit('REJECT')
+                  }}
+                >
+                  {isSubmittingDecision ? 'Submitting decision...' : 'Reject'}
+                </button>
+              </form>
 
-            {!currentUser && <p>You must be logged in to submit a decision.</p>}
-            {decisionErrorMessage && <p>{decisionErrorMessage}</p>}
-          </section>
+              {!currentUser && <p>You must be logged in to submit a decision.</p>}
+              {decisionErrorMessage && <p>{decisionErrorMessage}</p>}
+            </section>
+          )}
 
           <section>
             <h2>Approval Decision History</h2>

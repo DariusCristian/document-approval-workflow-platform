@@ -6,7 +6,7 @@ import { useAuth } from '../app/AuthContext'
 
 function LoginPage() {
   const navigate = useNavigate()
-  const { setCurrentUser } = useAuth()
+  const { refreshCurrentUser, loginNotice } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -20,12 +20,9 @@ function LoginPage() {
     setErrorMessage('')
 
     try {
-      const loginResponse = await login(email, password)
-      setCurrentUser({
-        userId: loginResponse.userId,
-        email: loginResponse.email,
-        role: loginResponse.role,
-      })
+      await login(email, password)
+      // Load the user from the new session, so the app only trusts what the server says.
+      await refreshCurrentUser()
       setSuccessMessage('Login successful. Redirecting to documents...')
       navigate('/documents')
     } catch (error) {
@@ -42,6 +39,7 @@ function LoginPage() {
   return (
     <main>
       <h1>Login Page</h1>
+      {loginNotice && <p>{loginNotice}</p>}
       <form onSubmit={handleSubmit}>
         <div>
           <label htmlFor="email">Email</label>
