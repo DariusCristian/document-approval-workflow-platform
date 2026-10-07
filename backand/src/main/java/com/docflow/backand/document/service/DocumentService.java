@@ -5,6 +5,7 @@ import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
 
+import com.docflow.backand.common.exception.ForbiddenException;
 import com.docflow.backand.document.domain.Document;
 import com.docflow.backand.document.domain.DocumentStatus;
 import com.docflow.backand.document.repository.DocumentRepository;
@@ -39,14 +40,20 @@ public class DocumentService {
         return documentRepository.save(document);
     }
 
-    public Document updateStatus(Long documentId, String status) {
+    public Document updateStatus(Long documentId, String status, Long currentUserId) {
         Document document = getDocumentById(documentId);
+
+        if (!document.getCreatedBy().getId().equals(currentUserId)) {
+            throw new ForbiddenException("Only the author can submit this document for review.");
+        }
+
         DocumentStatus newStatus = parseDocumentStatus(status);
         DocumentStatus currentStatus = document.getStatus();
 
         if (!isAllowedTransition(currentStatus, newStatus)) {
             throw new IllegalArgumentException(
-                    "Invalid status transition: " + currentStatus + " -> " + newStatus);
+                    "Invalid status transition: " + currentStatus + " -> " + newStatus
+                            + ". Only DRAFT -> IN_REVIEW is allowed here; approve or reject through a decision.");
         }
 
         document.setStatus(newStatus);
@@ -65,11 +72,8 @@ public class DocumentService {
         }
     }
 
+    // APPROVED and REJECTED are only reached through approval decisions.
     private boolean isAllowedTransition(DocumentStatus currentStatus, DocumentStatus newStatus) {
-        return switch (currentStatus) {
-            case DRAFT -> newStatus == DocumentStatus.IN_REVIEW;
-            case IN_REVIEW -> newStatus == DocumentStatus.APPROVED || newStatus == DocumentStatus.REJECTED;
-            case APPROVED, REJECTED -> false;
-        };
+        return currentStatus == DocumentStatus.DRAFT && newStatus == DocumentStatus.IN_REVIEW;
     }
 }

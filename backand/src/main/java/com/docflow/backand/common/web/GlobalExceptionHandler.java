@@ -14,6 +14,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.docflow.backand.common.exception.ForbiddenException;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -39,6 +41,14 @@ public class GlobalExceptionHandler {
         body.put("status", HttpStatus.UNAUTHORIZED.value());
         body.put("message", exception.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, Object>> handleForbiddenException(ForbiddenException exception) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", HttpStatus.FORBIDDEN.value());
+        body.put("message", exception.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

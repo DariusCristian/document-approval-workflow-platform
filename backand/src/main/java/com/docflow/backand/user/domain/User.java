@@ -60,6 +60,10 @@ public class User {
         return fullName;
     }
 
+    public UserRole getRole() {
+        return roleName;
+    }
+
     public String getRoleName() {
         return roleName != null ? roleName.name() : null;
     }

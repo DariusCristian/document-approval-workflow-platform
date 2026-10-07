@@ -7,6 +7,7 @@ import java.util.NoSuchElementException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.docflow.backand.common.exception.ForbiddenException;
 import com.docflow.backand.user.domain.User;
 import com.docflow.backand.user.domain.UserRole;
 import com.docflow.backand.user.repository.UserRepository;
@@ -31,7 +32,12 @@ public class UserService {
                 .orElseThrow(() -> new NoSuchElementException("User not found with id: " + id));
     }
 
-    public User createUser(String email, String fullName, String roleName, String password) {
+    public User createUser(Long currentUserId, String email, String fullName, String roleName, String password) {
+        User currentUser = getUserById(currentUserId);
+        if (currentUser.getRole() != UserRole.ADMIN) {
+            throw new ForbiddenException("Only admins can create users.");
+        }
+
         UserRole userRole = toUserRole(roleName);
         String passwordHash = toPasswordHash(password);
         User user = new User(email, fullName, userRole, passwordHash);
