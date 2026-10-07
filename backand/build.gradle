@@ -33,6 +33,11 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// Local development: `./gradlew bootRun` uses the "dev" profile (demo data seeding).
+tasks.named('bootRun') {
+	systemProperty 'spring.profiles.active', 'dev'
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 }

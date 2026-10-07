@@ -1,7 +1,6 @@
 package com.docflow.backand.user.domain;
 
 import java.time.LocalDateTime;
-import java.util.Locale;
 
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -17,8 +16,6 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "app_user")
 public class User {
-
-    private static final String TEMPORARY_PASSWORD_HASH = "{noop}temporary-password";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,17 +39,6 @@ public class User {
     private LocalDateTime createdAt;
 
     public User() {
-    }
-
-    public User(String email, String fullName, String roleName) {
-        this.email = email;
-        this.fullName = fullName;
-        this.roleName = parseRoleName(roleName);
-        this.passwordHash = TEMPORARY_PASSWORD_HASH;
-    }
-
-    public User(String email, String fullName, UserRole roleName) {
-        this(email, fullName, roleName, TEMPORARY_PASSWORD_HASH);
     }
 
     public User(String email, String fullName, UserRole roleName, String passwordHash) {
@@ -94,22 +80,11 @@ public class User {
         this.fullName = fullName;
     }
 
-    public void setRoleName(String roleName) {
-        this.roleName = parseRoleName(roleName);
-    }
-
     public void setRoleName(UserRole roleName) {
         this.roleName = roleName;
     }
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
-    }
-
-    private UserRole parseRoleName(String roleName) {
-        if (roleName == null) {
-            return null;
-        }
-        return UserRole.valueOf(roleName.trim().toUpperCase(Locale.ROOT));
     }
 }
