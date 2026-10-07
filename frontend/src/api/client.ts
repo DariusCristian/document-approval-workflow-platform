@@ -20,6 +20,30 @@ export class ApiError extends Error {
 
 let unauthorizedHandler: (() => void) | null = null
 
+// CSRF protection: the server puts a token in this cookie, and every state-changing
+// request must send it back in this header (another site can't read our cookies).
+const CSRF_COOKIE_NAME = 'XSRF-TOKEN'
+const CSRF_HEADER_NAME = 'X-XSRF-TOKEN'
+const CSRF_PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE']
+
+function readCookie(name: string): string | null {
+  const prefix = `${name}=`
+  const cookie = document.cookie.split('; ').find((part) => part.startsWith(prefix))
+  return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : null
+}
+
+// Returns the current CSRF token, asking the server for one first if there is none yet
+// (e.g. before the very first login). Read fresh each time: login and logout replace it.
+async function getCsrfToken(): Promise<string | null> {
+  const token = readCookie(CSRF_COOKIE_NAME)
+  if (token) {
+    return token
+  }
+
+  await fetch(`${API_BASE_URL}/api/auth/csrf`, { credentials: 'include' })
+  return readCookie(CSRF_COOKIE_NAME)
+}
+
 // Called whenever a request gets 401 (the session expired or is missing). Set by AuthProvider.
 export function setUnauthorizedHandler(handler: (() => void) | null) {
   unauthorizedHandler = handler
@@ -32,6 +56,14 @@ export async function fetchJson<T>(
   const { skipUnauthorizedHandler, ...requestOptions } = options
   const headers = new Headers(options.headers)
   headers.set('Accept', 'application/json')
+
+  const method = (options.method ?? 'GET').toUpperCase()
+  if (CSRF_PROTECTED_METHODS.includes(method)) {
+    const csrfToken = await getCsrfToken()
+    if (csrfToken) {
+      headers.set(CSRF_HEADER_NAME, csrfToken)
+    }
+  }
 
   const inputBody = options.body
   let body: BodyInit | null | undefined
