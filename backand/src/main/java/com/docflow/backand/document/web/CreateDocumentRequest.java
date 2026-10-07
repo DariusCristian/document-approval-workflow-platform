@@ -1,7 +1,6 @@
 package com.docflow.backand.document.web;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public class CreateDocumentRequest {
 
@@ -10,9 +9,6 @@ public class CreateDocumentRequest {
 
     @NotBlank
     private String content;
-
-    @NotNull
-    private Long createdById;
 
     public CreateDocumentRequest() {
     }
@@ -31,13 +27,5 @@ public class CreateDocumentRequest {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public Long getCreatedById() {
-        return createdById;
-    }
-
-    public void setCreatedById(Long createdById) {
-        this.createdById = createdById;
     }
 }

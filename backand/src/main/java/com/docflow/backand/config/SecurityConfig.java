@@ -17,6 +17,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.savedrequest.NullRequestCache;
 
 import com.docflow.backand.security.CustomUserDetailsService;
 
@@ -35,6 +36,8 @@ public class SecurityConfig {
         http
             .userDetailsService(customUserDetailsService)
             .csrf(AbstractHttpConfigurer::disable)
+            // Don't remember rejected requests in a new session (that is only useful for login-page redirects).
+            .requestCache(requestCache -> requestCache.requestCache(new NullRequestCache()))
             .securityContext(securityContext -> securityContext.securityContextRepository(securityContextRepository))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()

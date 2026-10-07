@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.docflow.backand.approval.domain.ApprovalDecision;
 import com.docflow.backand.approval.service.ApprovalDecisionService;
+import com.docflow.backand.security.UserPrincipal;
 
 @RestController
 public class ApprovalDecisionController {
@@ -32,10 +34,11 @@ public class ApprovalDecisionController {
     @PostMapping("/api/documents/{documentId}/decisions")
     public ApprovalDecisionResponse createApprovalDecision(
             @PathVariable Long documentId,
-            @Valid @RequestBody CreateApprovalDecisionRequest request) {
+            @Valid @RequestBody CreateApprovalDecisionRequest request,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
         ApprovalDecision approvalDecision = approvalDecisionService.createDecision(
                 documentId,
-                request.getDecidedById(),
+                currentUser.getUser().getId(),
                 request.getDecision(),
                 request.getComment());
 

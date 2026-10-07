@@ -107,7 +107,7 @@ function DocumentDetailPage() {
     setIsSubmittingComment(true)
 
     try {
-      await createDocumentComment(documentId, currentUser.userId, trimmedContent)
+      await createDocumentComment(documentId, trimmedContent)
       const refreshedComments = await getDocumentComments(documentId)
       setComments(refreshedComments)
       setCommentContent('')
@@ -140,7 +140,6 @@ function DocumentDetailPage() {
     try {
       await createDocumentDecision(
         documentId,
-        currentUser.userId,
         decision,
         decisionComment.trim() || undefined,
       )

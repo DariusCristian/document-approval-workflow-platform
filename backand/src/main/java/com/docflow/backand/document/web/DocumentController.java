@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.docflow.backand.document.domain.Document;
 import com.docflow.backand.document.service.DocumentService;
+import com.docflow.backand.security.UserPrincipal;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -39,11 +41,13 @@ public class DocumentController {
     }
 
     @PostMapping
-    public DocumentResponse createDocument(@Valid @RequestBody CreateDocumentRequest request) {
+    public DocumentResponse createDocument(
+            @Valid @RequestBody CreateDocumentRequest request,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
         Document document = documentService.createDocument(
                 request.getTitle(),
                 request.getContent(),
-                request.getCreatedById());
+                currentUser.getUser().getId());
 
         return toDocumentResponse(document);
     }

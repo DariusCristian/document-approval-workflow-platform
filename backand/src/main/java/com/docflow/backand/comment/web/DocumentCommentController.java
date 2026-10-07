@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.docflow.backand.comment.domain.DocumentComment;
 import com.docflow.backand.comment.service.DocumentCommentService;
+import com.docflow.backand.security.UserPrincipal;
 
 @RestController
 public class DocumentCommentController {
@@ -32,10 +34,11 @@ public class DocumentCommentController {
     @PostMapping("/api/documents/{documentId}/comments")
     public DocumentCommentResponse createComment(
             @PathVariable Long documentId,
-            @Valid @RequestBody CreateDocumentCommentRequest request) {
+            @Valid @RequestBody CreateDocumentCommentRequest request,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
         DocumentComment documentComment = documentCommentService.createComment(
                 documentId,
-                request.getAuthorId(),
+                currentUser.getUser().getId(),
                 request.getContent());
         return toDocumentCommentResponse(documentComment);
     }

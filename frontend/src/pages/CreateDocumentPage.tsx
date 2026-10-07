@@ -35,11 +35,7 @@ function CreateDocumentPage() {
     setIsSubmitting(true)
 
     try {
-      const createdDocument = await createDocument(
-        trimmedTitle,
-        trimmedContent,
-        currentUser.userId,
-      )
+      const createdDocument = await createDocument(trimmedTitle, trimmedContent)
 
       setSuccessMessage('Document created successfully. Redirecting...')
       navigate(`/documents/${createdDocument.id}`)
