@@ -2,6 +2,8 @@ package com.docflow.backand.document.domain;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import com.docflow.backand.user.domain.User;
 
 import jakarta.persistence.Column;
@@ -38,7 +40,8 @@ public class Document {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     public Document() {

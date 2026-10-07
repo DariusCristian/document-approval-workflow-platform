@@ -2,6 +2,8 @@ package com.docflow.backand.comment.domain;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import com.docflow.backand.document.domain.Document;
 import com.docflow.backand.user.domain.User;
 
@@ -34,7 +36,8 @@ public class DocumentComment {
     @Column(nullable = false, columnDefinition = "text")
     private String content;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     public DocumentComment() {

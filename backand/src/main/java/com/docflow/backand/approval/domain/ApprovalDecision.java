@@ -2,6 +2,8 @@ package com.docflow.backand.approval.domain;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import com.docflow.backand.document.domain.Document;
 import com.docflow.backand.user.domain.User;
 
@@ -40,7 +42,8 @@ public class ApprovalDecision {
     @Column(columnDefinition = "text")
     private String comment;
 
-    @Column(name = "decided_at", nullable = false, insertable = false, updatable = false)
+    @CreationTimestamp
+    @Column(name = "decided_at", nullable = false, updatable = false)
     private LocalDateTime decidedAt;
 
     public ApprovalDecision() {
