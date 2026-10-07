@@ -1,32 +1,14 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getCurrentUser, logout as logoutRequest } from '../api/auth'
 import { setUnauthorizedHandler } from '../api/client'
+import { AuthContext } from './useAuth'
+import type { AuthContextValue, CurrentUser } from './useAuth'
 
 // Older versions kept the user here; it is no longer read, only cleaned up.
 const LEGACY_STORAGE_KEY = 'docflow_current_user'
 
 const SESSION_EXPIRED_MESSAGE = 'Your session expired, please log in again.'
-
-export interface CurrentUser {
-  id: number
-  email: string
-  fullName: string
-  role: string
-}
-
-interface AuthContextValue {
-  currentUser: CurrentUser | null
-  // True until the first /api/auth/me check has finished.
-  isCheckingSession: boolean
-  // A message for the login page, e.g. after the session expired.
-  loginNotice: string
-  // Asks the server who is logged in (call right after a successful login).
-  refreshCurrentUser: () => Promise<void>
-  logout: () => Promise<void>
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 interface AuthProviderProps {
   children: ReactNode
@@ -102,13 +84,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider.')
-  }
-
-  return context
 }

@@ -15,7 +15,7 @@ import type {
   Document,
   DocumentComment,
 } from '../api/documents'
-import { useAuth } from '../app/AuthContext'
+import { useAuth } from '../app/useAuth'
 
 function DocumentDetailPage() {
   const { currentUser } = useAuth()

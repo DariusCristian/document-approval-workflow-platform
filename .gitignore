@@ -2,8 +2,8 @@
 .DS_Store
 
 # Backend build output
-backand/.gradle/
-backand/build/
+backend/.gradle/
+backend/build/
 
 # Frontend build output
 frontend/node_modules/

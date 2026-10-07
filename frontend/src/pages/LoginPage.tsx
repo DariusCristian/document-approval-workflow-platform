@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../api/auth'
-import { useAuth } from '../app/AuthContext'
+import { useAuth } from '../app/useAuth'
 
 function LoginPage() {
   const navigate = useNavigate()
