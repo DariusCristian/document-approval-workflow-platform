@@ -1,4 +1,5 @@
-export const API_BASE_URL = 'http://localhost:8080'
+// Relative URLs: in development the Vite dev server proxies /api to the backend (see vite.config.ts).
+export const API_BASE_URL = ''
 
 interface FetchJsonOptions extends Omit<RequestInit, 'body'> {
   body?: unknown

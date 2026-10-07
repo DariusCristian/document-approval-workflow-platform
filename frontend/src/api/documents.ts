@@ -47,14 +47,18 @@ export function getDocumentComments(id: number): Promise<DocumentComment[]> {
 }
 
 interface CreateDocumentCommentRequest {
+  // TEMPORARY: the client sends its own user ID until real authentication
+  // lets the backend work out the current user itself.
+  authorId: number
   content: string
 }
 
 export function createDocumentComment(
   id: number,
+  authorId: number,
   content: string,
 ): Promise<DocumentComment> {
-  const payload: CreateDocumentCommentRequest = { content }
+  const payload: CreateDocumentCommentRequest = { authorId, content }
 
   return fetchJson<DocumentComment>(`/api/documents/${id}/comments`, {
     method: 'POST',
@@ -67,16 +71,21 @@ export function getDocumentDecisions(id: number): Promise<ApprovalDecision[]> {
 }
 
 interface CreateDocumentDecisionRequest {
+  // TEMPORARY: the client sends its own user ID until real authentication
+  // lets the backend work out the current user itself.
+  decidedById: number
   decision: DecisionType
   comment?: string
 }
 
 export function createDocumentDecision(
   id: number,
+  decidedById: number,
   decision: DecisionType,
   comment?: string,
 ): Promise<ApprovalDecision> {
   const payload: CreateDocumentDecisionRequest = {
+    decidedById,
     decision,
   }
 
@@ -86,6 +95,19 @@ export function createDocumentDecision(
 
   return fetchJson<ApprovalDecision>(`/api/documents/${id}/decisions`, {
     method: 'POST',
+    body: payload,
+  })
+}
+
+interface UpdateDocumentStatusRequest {
+  status: string
+}
+
+export function updateDocumentStatus(id: number, status: string): Promise<Document> {
+  const payload: UpdateDocumentStatusRequest = { status }
+
+  return fetchJson<Document>(`/api/documents/${id}/status`, {
+    method: 'PATCH',
     body: payload,
   })
 }

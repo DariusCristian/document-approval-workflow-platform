@@ -7,6 +7,7 @@ import {
   getDocumentById,
   getDocumentComments,
   getDocumentDecisions,
+  updateDocumentStatus,
 } from '../api/documents'
 import type {
   ApprovalDecision,
@@ -31,6 +32,8 @@ function DocumentDetailPage() {
   const [decisionComment, setDecisionComment] = useState('')
   const [isSubmittingDecision, setIsSubmittingDecision] = useState(false)
   const [decisionErrorMessage, setDecisionErrorMessage] = useState('')
+  const [isSubmittingForReview, setIsSubmittingForReview] = useState(false)
+  const [submitForReviewErrorMessage, setSubmitForReviewErrorMessage] = useState('')
 
   useEffect(() => {
     if (!Number.isInteger(documentId) || documentId <= 0) {
@@ -104,7 +107,7 @@ function DocumentDetailPage() {
     setIsSubmittingComment(true)
 
     try {
-      await createDocumentComment(documentId, trimmedContent)
+      await createDocumentComment(documentId, currentUser.userId, trimmedContent)
       const refreshedComments = await getDocumentComments(documentId)
       setComments(refreshedComments)
       setCommentContent('')
@@ -137,6 +140,7 @@ function DocumentDetailPage() {
     try {
       await createDocumentDecision(
         documentId,
+        currentUser.userId,
         decision,
         decisionComment.trim() || undefined,
       )
@@ -160,6 +164,24 @@ function DocumentDetailPage() {
     }
   }
 
+  const handleSubmitForReview = async () => {
+    setSubmitForReviewErrorMessage('')
+    setIsSubmittingForReview(true)
+
+    try {
+      const updatedDocument = await updateDocumentStatus(documentId, 'IN_REVIEW')
+      setDocument(updatedDocument)
+    } catch (error) {
+      if (error instanceof Error) {
+        setSubmitForReviewErrorMessage(error.message)
+      } else {
+        setSubmitForReviewErrorMessage('Failed to submit document for review.')
+      }
+    } finally {
+      setIsSubmittingForReview(false)
+    }
+  }
+
   return (
     <main>
       <h1>Document Detail Page</h1>
@@ -173,6 +195,21 @@ function DocumentDetailPage() {
           <p>Content: {document.content}</p>
           <p>Status: {document.status}</p>
           <p>Created By ID: {document.createdById}</p>
+
+          {document.status === 'DRAFT' && (
+            <>
+              <button
+                type="button"
+                disabled={isSubmittingForReview}
+                onClick={() => {
+                  void handleSubmitForReview()
+                }}
+              >
+                {isSubmittingForReview ? 'Submitting for review...' : 'Submit for review'}
+              </button>
+              {submitForReviewErrorMessage && <p>{submitForReviewErrorMessage}</p>}
+            </>
+          )}
 
           <section>
             <h2>Comments</h2>
