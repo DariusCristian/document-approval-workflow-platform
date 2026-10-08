@@ -55,7 +55,7 @@ DRAFT ──(author submits)──> IN_REVIEW ──(reviewer/admin decides)─�
 │       │   └── user/            users and roles
 │       ├── main/resources/
 │       │   ├── application.yml
-│       │   └── db/migration/    Flyway migrations V1–V5
+│       │   └── db/migration/    Flyway migrations V1–V6
 │       └── test/java/com/docflow/backend/
 │           └── support/         shared test base class (Testcontainers) and test data helper
 ├── frontend/                    React app
@@ -136,11 +136,12 @@ The frontend tests need no backend: API calls are mocked.
 - **Identity:** fake `createdById`, `authorId` or `decidedById` values in request bodies are ignored, and the logged-in user is used.
 - **Role rules:** authors can't decide, nobody decides on their own document (admins included), reviewers and admins can decide on others' documents, and only admins create users.
 - **Workflow:** only the author submits a draft, APPROVED and REJECTED can't be set through the status endpoint, decisions only work on IN_REVIEW documents, and a decision updates the status and the history.
-- **Responses:** author and decider names are filled in, the documents list is newest first, a missing document gives `404`, and validation errors use the JSON error shape.
+- **Decision consistency:** a decision and the new status are saved together or not at all, and when two people decide at the same moment, the second gets `409` and only one decision is kept.
+- **Responses:** author and decider names are filled in, the documents list is newest first, a missing document gives `404` (also when commenting or deciding), and validation errors use the JSON error shape.
 
 **Frontend**
 - `formatDate` and `formatDateTime`, and the status labels.
-- The document detail page shows the right actions for each user: the author on a draft, a reviewer or admin on someone else's document in review, and a reviewer or admin on their own document.
+- The document detail page shows the right actions for each user: the author on a draft, a reviewer or admin on someone else's document in review, and a reviewer or admin on their own document. After a `409` conflict it shows the message and reloads the document.
 
 ## Security design
 
@@ -175,6 +176,7 @@ The services enforce these rules. A violation returns `403` with a clear message
 | Create, list and view documents; comment | any logged-in user |
 
 - **Four-eyes rule:** nobody can decide on a document they wrote, admins included.
+- **Simultaneous decisions:** documents use optimistic locking (`@Version`). If two people decide on the same document at the same moment, the second gets `409` with "This document was just updated by someone else. Please reload and try again.", and the page reloads the document.
 - **Status endpoint:** it only allows `DRAFT → IN_REVIEW`. Any other transition returns `400`, because APPROVED and REJECTED can only be reached through a decision.
 
 ### CSRF protection

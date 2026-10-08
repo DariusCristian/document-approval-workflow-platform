@@ -17,6 +17,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "document")
@@ -43,6 +44,11 @@ public class Document {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    // Optimistic locking: an update only succeeds if nobody else changed the document since it was read.
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     public Document() {
     }
@@ -100,5 +106,9 @@ public class Document {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 }

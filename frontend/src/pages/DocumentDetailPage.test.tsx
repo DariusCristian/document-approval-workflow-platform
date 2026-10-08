@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { ApiError } from '../api/client'
 import * as documentsApi from '../api/documents'
 import type { Document } from '../api/documents'
 import { AuthContext } from '../app/useAuth'
@@ -105,6 +106,33 @@ describe('DocumentDetailPage actions', () => {
     fireEvent.click(approveButton()!)
 
     expect(api.createDocumentDecision).toHaveBeenCalledWith(42, 'APPROVE', undefined)
+  })
+
+  it('shows the conflict message and reloads the document when someone else decided first', async () => {
+    const conflictMessage = 'This document was just updated by someone else. Please reload and try again.'
+    api.createDocumentDecision.mockRejectedValue(new ApiError(409, conflictMessage))
+    await renderPage(reviewer, documentBy(author, 'IN_REVIEW'))
+    // When the page reloads, the document was already approved by an admin.
+    api.getDocumentById.mockResolvedValue(documentBy(author, 'APPROVED'))
+    api.getDocumentDecisions.mockResolvedValue([
+      {
+        id: 8,
+        documentId: 42,
+        decidedById: admin.id,
+        decidedByName: admin.fullName,
+        decision: 'APPROVE',
+        comment: null,
+        decidedAt: '2026-10-08T15:00:00',
+      },
+    ])
+
+    fireEvent.click(rejectButton()!)
+
+    expect(await screen.findByText(conflictMessage)).toBeInTheDocument()
+    expect(await screen.findByText('This document was approved. The decision is final.')).toBeInTheDocument()
+    expect(screen.getByText(admin.fullName)).toBeInTheDocument()
+    expect(approveButton()).not.toBeInTheDocument()
+    expect(rejectButton()).not.toBeInTheDocument()
   })
 
   it('shows no decision buttons to a reviewer on their own document, and explains why', async () => {

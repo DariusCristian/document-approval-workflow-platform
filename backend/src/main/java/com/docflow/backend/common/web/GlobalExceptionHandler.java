@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -68,6 +69,16 @@ public class GlobalExceptionHandler {
 
         body.put("errors", fieldErrors);
         return ResponseEntity.badRequest().body(body);
+    }
+
+    // Someone else changed the same document between our read and our write (see @Version on Document).
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, Object>> handleOptimisticLockingFailureException(
+            OptimisticLockingFailureException exception) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("message", "This document was just updated by someone else. Please reload and try again.");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

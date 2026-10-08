@@ -1,6 +1,7 @@
 package com.docflow.backend.comment.service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,7 @@ public class DocumentCommentService {
 
     public DocumentComment createComment(Long documentId, Long authorId, String content) {
         Document document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new IllegalArgumentException("Document not found with id: " + documentId));
+                .orElseThrow(() -> new NoSuchElementException("Document not found with id: " + documentId));
 
         User author = userRepository.findById(authorId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + authorId));

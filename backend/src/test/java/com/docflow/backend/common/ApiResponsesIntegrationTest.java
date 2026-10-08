@@ -114,6 +114,38 @@ class ApiResponsesIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void commenting_on_a_missing_document_gives_404_with_our_error_shape() throws Exception {
+        User author = testData.user(UserRole.AUTHOR);
+
+        mockMvc.perform(post("/api/documents/{id}/comments", 999_999)
+                        .with(loggedInAs(author))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"content": "Hello?"}
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Document not found with id: 999999"));
+    }
+
+    @Test
+    void deciding_on_a_missing_document_gives_404_with_our_error_shape() throws Exception {
+        User reviewer = testData.user(UserRole.REVIEWER);
+
+        mockMvc.perform(post("/api/documents/{id}/decisions", 999_999)
+                        .with(loggedInAs(reviewer))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"decision": "APPROVE"}
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Document not found with id: 999999"));
+    }
+
+    @Test
     void validation_errors_give_400_with_our_error_shape() throws Exception {
         User author = testData.user(UserRole.AUTHOR);
 

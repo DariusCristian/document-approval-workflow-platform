@@ -178,6 +178,20 @@ function DocumentDetailPage() {
       } else {
         setDecisionErrorMessage('Failed to submit decision.')
       }
+
+      // 409: someone else decided first. Show the fresh state, so the buttons match the new status.
+      if (error instanceof ApiError && error.status === 409) {
+        try {
+          const [refreshedDocument, refreshedDecisions] = await Promise.all([
+            getDocumentById(documentId),
+            getDocumentDecisions(documentId),
+          ])
+          setDocument(refreshedDocument)
+          setDecisions(refreshedDecisions)
+        } catch {
+          // Keep the conflict message; the user can still reload the page.
+        }
+      }
     } finally {
       setSubmittingDecision(null)
     }
@@ -332,12 +346,18 @@ function DocumentDetailPage() {
                     {!currentUser && (
                       <Alert variant="info">You must be logged in to submit a decision.</Alert>
                     )}
-                    {decisionErrorMessage && <Alert variant="error">{decisionErrorMessage}</Alert>}
                   </form>
                 )}
 
                 {!canSubmitForReview && !canDecide && (
                   <p className="text-sm text-ink-subtle">{getActionHint(document, currentUser, isAuthor)}</p>
+                )}
+
+                {/* Outside the form: after a conflict the form is gone, but the message must stay visible. */}
+                {decisionErrorMessage && (
+                  <Alert variant="error" className="mt-3">
+                    {decisionErrorMessage}
+                  </Alert>
                 )}
               </SidebarSection>
 
