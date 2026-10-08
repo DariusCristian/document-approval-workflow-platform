@@ -2,20 +2,9 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../app/useAuth'
 import { cn } from '../../utils/cn'
+import Avatar from '../ui/Avatar'
 import Button from '../ui/Button'
 import Logo from './Logo'
-
-// "Rita Reviewer" -> "RR", "Alice" -> "A".
-function getInitials(fullName: string, email: string): string {
-  const words = fullName.trim().split(/\s+/).filter(Boolean)
-  if (words.length === 0) {
-    return email.charAt(0).toUpperCase()
-  }
-
-  const first = words[0].charAt(0)
-  const last = words.length > 1 ? words[words.length - 1].charAt(0) : ''
-  return (first + last).toUpperCase()
-}
 
 // "REVIEWER" -> "Reviewer".
 function formatRole(role: string): string {
@@ -89,12 +78,7 @@ function AppHeader() {
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           {currentUser && (
             <div className="flex items-center gap-2.5">
-              <span
-                aria-hidden="true"
-                className="flex size-8 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent"
-              >
-                {getInitials(currentUser.fullName, currentUser.email)}
-              </span>
+              <Avatar name={currentUser.fullName} email={currentUser.email} />
               <div className="hidden leading-tight sm:block">
                 <p className="text-sm font-medium text-ink">{currentUser.fullName}</p>
                 <p className="text-xs text-ink-subtle">{formatRole(currentUser.role)}</p>

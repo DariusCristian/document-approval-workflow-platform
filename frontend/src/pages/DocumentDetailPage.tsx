@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ApiError } from '../api/client'
 import {
   createDocumentComment,
   createDocumentDecision,
@@ -16,6 +17,17 @@ import type {
   DocumentComment,
 } from '../api/documents'
 import { useAuth } from '../app/useAuth'
+import type { CurrentUser } from '../app/useAuth'
+import Alert from '../components/ui/Alert'
+import Avatar from '../components/ui/Avatar'
+import Button from '../components/ui/Button'
+import Card from '../components/ui/Card'
+import EmptyState from '../components/ui/EmptyState'
+import StatusBadge from '../components/ui/StatusBadge'
+import { buttonClasses } from '../components/ui/buttonStyles'
+import { inputClasses, labelClasses } from '../components/ui/formStyles'
+import { DocumentIcon } from '../components/ui/icons'
+import { cn } from '../utils/cn'
 import { formatDateTime } from '../utils/formatDate'
 
 function DocumentDetailPage() {
@@ -27,11 +39,14 @@ function DocumentDetailPage() {
   const [decisions, setDecisions] = useState<ApprovalDecision[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  // True for an invalid id or a 404, so the error card can say "not found".
+  const [isNotFound, setIsNotFound] = useState(false)
   const [commentContent, setCommentContent] = useState('')
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [commentErrorMessage, setCommentErrorMessage] = useState('')
   const [decisionComment, setDecisionComment] = useState('')
-  const [isSubmittingDecision, setIsSubmittingDecision] = useState(false)
+  // Which decision is being sent, so only that button shows a spinner.
+  const [submittingDecision, setSubmittingDecision] = useState<DecisionType | null>(null)
   const [decisionErrorMessage, setDecisionErrorMessage] = useState('')
   const [isSubmittingForReview, setIsSubmittingForReview] = useState(false)
   const [submitForReviewErrorMessage, setSubmitForReviewErrorMessage] = useState('')
@@ -39,6 +54,7 @@ function DocumentDetailPage() {
   useEffect(() => {
     if (!Number.isInteger(documentId) || documentId <= 0) {
       setErrorMessage('Invalid document id.')
+      setIsNotFound(true)
       setIsLoading(false)
       return
     }
@@ -48,6 +64,7 @@ function DocumentDetailPage() {
     const loadDocumentDetails = async () => {
       setIsLoading(true)
       setErrorMessage('')
+      setIsNotFound(false)
 
       try {
         const [documentData, commentsData, decisionsData] = await Promise.all([
@@ -71,6 +88,7 @@ function DocumentDetailPage() {
         } else {
           setErrorMessage('Failed to load document details.')
         }
+        setIsNotFound(error instanceof ApiError && error.status === 404)
       } finally {
         if (!isCancelled) {
           setIsLoading(false)
@@ -136,7 +154,7 @@ function DocumentDetailPage() {
       return
     }
 
-    setIsSubmittingDecision(true)
+    setSubmittingDecision(decision)
 
     try {
       await createDocumentDecision(
@@ -160,7 +178,7 @@ function DocumentDetailPage() {
         setDecisionErrorMessage('Failed to submit decision.')
       }
     } finally {
-      setIsSubmittingDecision(false)
+      setSubmittingDecision(null)
     }
   }
 
@@ -189,139 +207,331 @@ function DocumentDetailPage() {
     (currentUser?.role === 'REVIEWER' || currentUser?.role === 'ADMIN') &&
     !isAuthor &&
     document?.status === 'IN_REVIEW'
+  const isSubmittingDecision = submittingDecision !== null
 
   return (
-    <main className="legacy-page">
-      <h1>Document Detail Page</h1>
-      {isLoading && <p>Loading document details...</p>}
-      {errorMessage && <p>{errorMessage}</p>}
+    <main>
+      <Link
+        to="/documents"
+        className="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-ink-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      >
+        <span aria-hidden="true">←</span> Documents
+      </Link>
+
+      {isLoading && <DocumentDetailSkeleton />}
+
+      {!isLoading && errorMessage && (
+        <Card className="mt-4">
+          <EmptyState
+            icon={<DocumentIcon className="size-6" />}
+            title={isNotFound ? 'Document not found' : "Couldn't load this document"}
+            description={
+              isNotFound
+                ? "This document doesn't exist, or the link is wrong."
+                : errorMessage
+            }
+            action={
+              <Link to="/documents" className={buttonClasses('secondary')}>
+                Back to documents
+              </Link>
+            }
+          />
+        </Card>
+      )}
 
       {!isLoading && !errorMessage && document && (
         <>
-          <p>Document ID: {document.id}</p>
-          <p>Title: {document.title}</p>
-          <p>Content: {document.content}</p>
-          <p>Status: {document.status}</p>
-          <p>Created by: {document.createdByName}</p>
-          <p>Created at: {formatDateTime(document.createdAt)}</p>
+          <header className="mt-4">
+            <h1 className="text-2xl font-semibold tracking-tight break-words text-ink">
+              {document.title}
+            </h1>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-ink-subtle">
+              <StatusBadge status={document.status} />
+              <span>
+                Created by <span className="font-medium text-ink-muted">{document.createdByName}</span>
+                {' · '}
+                <time dateTime={document.createdAt}>{formatDateTime(document.createdAt)}</time>
+              </span>
+            </div>
+          </header>
 
-          {canSubmitForReview && (
-            <>
-              <button
-                type="button"
-                disabled={isSubmittingForReview}
-                onClick={() => {
-                  void handleSubmitForReview()
-                }}
-              >
-                {isSubmittingForReview ? 'Submitting for review...' : 'Submit for review'}
-              </button>
-              {submitForReviewErrorMessage && <p>{submitForReviewErrorMessage}</p>}
-            </>
-          )}
+          {/*
+            Phone: one column, ordered actions → content → history → comments (the order-* classes).
+            Laptop: two columns. The wrappers are "display: contents" on phones, so their children
+            take part in that single ordered column; from lg up they become the two real columns.
+          */}
+          <div className="mt-6 flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-8">
+            <div className="contents lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-6">
+              <SidebarSection title="Actions" className="order-1">
+                {canSubmitForReview && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-ink-muted">
+                      When it's ready, send it to a reviewer. Once submitted, it can't go back to draft.
+                    </p>
+                    <Button
+                      className="w-full"
+                      isLoading={isSubmittingForReview}
+                      onClick={() => {
+                        void handleSubmitForReview()
+                      }}
+                    >
+                      {isSubmittingForReview ? 'Submitting…' : 'Submit for review'}
+                    </Button>
+                    {submitForReviewErrorMessage && (
+                      <Alert variant="error">{submitForReviewErrorMessage}</Alert>
+                    )}
+                  </div>
+                )}
 
-          <section>
-            <h2>Comments</h2>
-            <form onSubmit={handleCommentSubmit}>
-              <div>
-                <label htmlFor="content">Content</label>
-                <textarea
-                  id="content"
-                  name="content"
-                  value={commentContent}
-                  onChange={(event) => setCommentContent(event.target.value)}
-                  required
-                />
-              </div>
+                {canDecide && (
+                  <form onSubmit={(event) => event.preventDefault()} className="space-y-3">
+                    <div>
+                      <label htmlFor="decisionComment" className={labelClasses}>
+                        Comment <span className="font-normal text-ink-subtle">(optional)</span>
+                      </label>
+                      <textarea
+                        id="decisionComment"
+                        name="decisionComment"
+                        rows={3}
+                        placeholder="Explain your decision"
+                        value={decisionComment}
+                        onChange={(event) => setDecisionComment(event.target.value)}
+                        className={inputClasses('resize-y')}
+                      />
+                    </div>
 
-              <button
-                type="submit"
-                disabled={isSubmittingComment || !currentUser}
-              >
-                {isSubmittingComment ? 'Submitting comment...' : 'Add comment'}
-              </button>
-            </form>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        isLoading={submittingDecision === 'APPROVE'}
+                        disabled={isSubmittingDecision || !currentUser}
+                        onClick={() => {
+                          void handleDecisionSubmit('APPROVE')
+                        }}
+                      >
+                        {submittingDecision === 'APPROVE' ? 'Approving…' : 'Approve'}
+                      </Button>
+                      <Button
+                        variant="danger"
+                        isLoading={submittingDecision === 'REJECT'}
+                        disabled={isSubmittingDecision || !currentUser}
+                        onClick={() => {
+                          void handleDecisionSubmit('REJECT')
+                        }}
+                      >
+                        {submittingDecision === 'REJECT' ? 'Rejecting…' : 'Reject'}
+                      </Button>
+                    </div>
 
-            {!currentUser && <p>You must be logged in to add a comment.</p>}
-            {commentErrorMessage && <p>{commentErrorMessage}</p>}
+                    {!currentUser && (
+                      <Alert variant="info">You must be logged in to submit a decision.</Alert>
+                    )}
+                    {decisionErrorMessage && <Alert variant="error">{decisionErrorMessage}</Alert>}
+                  </form>
+                )}
 
-            {comments.length === 0 && <p>No comments yet.</p>}
-            {comments.length > 0 && (
-              <ul>
-                {comments.map((comment) => (
-                  <li key={comment.id}>
-                    <p>Author: {comment.authorName}</p>
-                    <p>Content: {comment.content}</p>
-                    <p>Created at: {formatDateTime(comment.createdAt)}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                {!canSubmitForReview && !canDecide && (
+                  <p className="text-sm text-ink-subtle">{getActionHint(document, currentUser, isAuthor)}</p>
+                )}
+              </SidebarSection>
 
-          {canDecide && (
-            <section>
-              <h2>Add Approval Decision</h2>
-              <form onSubmit={(event) => event.preventDefault()}>
-                <div>
-                  <label htmlFor="decisionComment">Comment (optional)</label>
-                  <textarea
-                    id="decisionComment"
-                    name="decisionComment"
-                    value={decisionComment}
-                    onChange={(event) => setDecisionComment(event.target.value)}
-                  />
-                </div>
+              <SidebarSection title="Decision history" className="order-3">
+                {decisions.length === 0 ? (
+                  <p className="text-sm text-ink-subtle">No decisions yet.</p>
+                ) : (
+                  <DecisionTimeline decisions={decisions} />
+                )}
+              </SidebarSection>
+            </div>
 
-                <button
-                  type="button"
-                  disabled={isSubmittingDecision || !currentUser}
-                  onClick={() => {
-                    void handleDecisionSubmit('APPROVE')
-                  }}
-                >
-                  {isSubmittingDecision ? 'Submitting decision...' : 'Approve'}
-                </button>
+            <div className="contents lg:col-start-1 lg:row-start-1 lg:flex lg:flex-col lg:gap-6">
+              <Card className="order-2">
+                <h2 className="sr-only">Content</h2>
+                <p className="leading-relaxed break-words whitespace-pre-wrap text-ink">
+                  {document.content}
+                </p>
+              </Card>
 
-                <button
-                  type="button"
-                  disabled={isSubmittingDecision || !currentUser}
-                  onClick={() => {
-                    void handleDecisionSubmit('REJECT')
-                  }}
-                >
-                  {isSubmittingDecision ? 'Submitting decision...' : 'Reject'}
-                </button>
-              </form>
+              <section aria-labelledby="comments-title" className="order-4">
+                <h2 id="comments-title" className="text-base font-semibold text-ink">
+                  Comments{' '}
+                  <span className="font-normal text-ink-subtle tabular-nums">({comments.length})</span>
+                </h2>
 
-              {!currentUser && <p>You must be logged in to submit a decision.</p>}
-              {decisionErrorMessage && <p>{decisionErrorMessage}</p>}
-            </section>
-          )}
+                <Card padded={false} className="mt-3">
+                  {comments.length === 0 ? (
+                    <p className="px-4 py-6 text-center text-sm text-ink-subtle sm:px-6">
+                      No comments yet. Start the discussion below.
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-line">
+                      {comments.map((comment) => (
+                        <li key={comment.id} className="flex gap-3 px-4 py-4 sm:px-6">
+                          <Avatar name={comment.authorName} />
+                          <div className="min-w-0 flex-1">
+                            <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
+                              <span className="font-medium text-ink">{comment.authorName}</span>
+                              <time dateTime={comment.createdAt} className="text-xs text-ink-subtle">
+                                {formatDateTime(comment.createdAt)}
+                              </time>
+                            </p>
+                            <p className="mt-1 text-sm break-words whitespace-pre-wrap text-ink-muted">
+                              {comment.content}
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
-          <section>
-            <h2>Approval Decision History</h2>
-            {decisions.length === 0 && <p>No decisions yet.</p>}
-            {decisions.length > 0 && (
-              <ul>
-                {decisions.map((decision) => (
-                  <li key={decision.id}>
-                    <p>Decision: {decision.decision}</p>
-                    <p>Decided by: {decision.decidedByName}</p>
-                    <p>Comment: {decision.comment || '-'}</p>
-                    <p>Decided at: {formatDateTime(decision.decidedAt)}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                  <form
+                    onSubmit={handleCommentSubmit}
+                    className="space-y-3 border-t border-line bg-canvas/60 px-4 py-4 sm:px-6"
+                  >
+                    <div>
+                      <label htmlFor="commentContent" className={labelClasses}>
+                        Add a comment
+                      </label>
+                      <textarea
+                        id="commentContent"
+                        name="content"
+                        rows={3}
+                        placeholder="Write a comment…"
+                        value={commentContent}
+                        onChange={(event) => setCommentContent(event.target.value)}
+                        required
+                        className={inputClasses('resize-y')}
+                      />
+                    </div>
+
+                    {!currentUser && (
+                      <Alert variant="info">You must be logged in to add a comment.</Alert>
+                    )}
+                    {commentErrorMessage && <Alert variant="error">{commentErrorMessage}</Alert>}
+
+                    <div className="flex justify-end">
+                      <Button
+                        type="submit"
+                        isLoading={isSubmittingComment}
+                        disabled={!currentUser}
+                      >
+                        {isSubmittingComment ? 'Posting…' : 'Add comment'}
+                      </Button>
+                    </div>
+                  </form>
+                </Card>
+              </section>
+            </div>
+          </div>
         </>
       )}
-
-      <p>
-        Back to list: <Link to="/documents">Documents</Link>
-      </p>
     </main>
+  )
+}
+
+// Explains why no action button is shown. The server enforces the same rules.
+function getActionHint(document: Document, currentUser: CurrentUser | null, isAuthor: boolean): string {
+  const isReviewerOrAdmin = currentUser?.role === 'REVIEWER' || currentUser?.role === 'ADMIN'
+
+  switch (document.status) {
+    case 'DRAFT':
+      return `This is a draft. Waiting for ${document.createdByName} to submit it for review.`
+    case 'IN_REVIEW':
+      if (isAuthor && isReviewerOrAdmin) {
+        return "You can't review your own document. Another reviewer or an admin has to decide."
+      }
+      return isAuthor
+        ? 'Waiting for a reviewer. Their decision will show up here.'
+        : 'Waiting for a reviewer.'
+    case 'APPROVED':
+      return 'This document was approved. The decision is final.'
+    case 'REJECTED':
+      return 'This document was rejected. The decision is final.'
+    default:
+      return 'No actions available.'
+  }
+}
+
+function SidebarSection({
+  title,
+  className,
+  children,
+}: {
+  title: string
+  className?: string
+  children: ReactNode
+}) {
+  const headingId = `section-${title.toLowerCase().replace(/\s+/g, '-')}`
+
+  return (
+    <Card className={className}>
+      <section aria-labelledby={headingId}>
+        <h2 id={headingId} className="mb-4 text-sm font-semibold text-ink">
+          {title}
+        </h2>
+        {children}
+      </section>
+    </Card>
+  )
+}
+
+// A vertical line with one colored dot per decision, oldest first.
+function DecisionTimeline({ decisions }: { decisions: ApprovalDecision[] }) {
+  return (
+    <ol className="relative space-y-5 border-l border-line pl-5">
+      {decisions.map((decision) => {
+        const isApproval = decision.decision === 'APPROVE'
+
+        return (
+          <li key={decision.id} className="relative">
+            <span
+              aria-hidden="true"
+              className={cn(
+                'absolute top-1 -left-[25px] size-2.5 rounded-full ring-4 ring-surface',
+                isApproval ? 'bg-approved-dot' : 'bg-rejected-dot',
+              )}
+            />
+            <p className="text-sm text-ink">
+              <span className={cn('font-semibold', isApproval ? 'text-approved-text' : 'text-rejected-text')}>
+                {isApproval ? 'Approved' : 'Rejected'}
+              </span>{' '}
+              by <span className="font-medium">{decision.decidedByName}</span>
+            </p>
+            <time dateTime={decision.decidedAt} className="text-xs text-ink-subtle">
+              {formatDateTime(decision.decidedAt)}
+            </time>
+            {decision.comment && (
+              <p className="mt-2 rounded-md bg-canvas px-3 py-2 text-sm break-words whitespace-pre-wrap text-ink-muted">
+                {decision.comment}
+              </p>
+            )}
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
+// Gray placeholders in the shape of the page while it loads.
+function DocumentDetailSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading document" className="mt-4 animate-pulse">
+      <div className="h-7 w-2/3 rounded bg-surface-muted" />
+      <div className="mt-3 flex gap-3">
+        <div className="h-5 w-20 rounded-full bg-surface-muted" />
+        <div className="h-5 w-48 rounded bg-surface-muted" />
+      </div>
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8">
+        <Card className="space-y-3">
+          <div className="h-4 rounded bg-surface-muted" />
+          <div className="h-4 rounded bg-surface-muted" />
+          <div className="h-4 w-4/5 rounded bg-surface-muted" />
+        </Card>
+        <Card className="space-y-3">
+          <div className="h-4 w-1/3 rounded bg-surface-muted" />
+          <div className="h-10 rounded bg-surface-muted" />
+        </Card>
+      </div>
+    </div>
   )
 }
 
