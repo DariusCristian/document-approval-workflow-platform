@@ -54,7 +54,7 @@ public class DocumentService {
         DocumentStatus newStatus = parseDocumentStatus(status);
         DocumentStatus currentStatus = document.getStatus();
 
-        if (!isAllowedTransition(currentStatus, newStatus)) {
+        if (!currentStatus.canTransitionTo(newStatus)) {
             throw new IllegalArgumentException(
                     "Invalid status transition: " + currentStatus + " -> " + newStatus
                             + ". Only DRAFT -> IN_REVIEW is allowed here; approve or reject through a decision.");
@@ -74,10 +74,5 @@ public class DocumentService {
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Invalid document status: " + status);
         }
-    }
-
-    // APPROVED and REJECTED are only reached through approval decisions.
-    private boolean isAllowedTransition(DocumentStatus currentStatus, DocumentStatus newStatus) {
-        return currentStatus == DocumentStatus.DRAFT && newStatus == DocumentStatus.IN_REVIEW;
     }
 }
