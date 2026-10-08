@@ -18,11 +18,7 @@ function PublicOnlyRoute() {
     return <Navigate to="/documents" replace />
   }
 
-  return (
-    <div className="legacy-page mx-auto max-w-md px-4 py-10">
-      <Outlet />
-    </div>
-  )
+  return <Outlet />
 }
 
 function ProtectedRoute() {
