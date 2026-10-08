@@ -16,6 +16,7 @@ import type {
   DocumentComment,
 } from '../api/documents'
 import { useAuth } from '../app/useAuth'
+import { formatDateTime } from '../utils/formatDate'
 
 function DocumentDetailPage() {
   const { currentUser } = useAuth()
@@ -201,7 +202,8 @@ function DocumentDetailPage() {
           <p>Title: {document.title}</p>
           <p>Content: {document.content}</p>
           <p>Status: {document.status}</p>
-          <p>Created By ID: {document.createdById}</p>
+          <p>Created by: {document.createdByName}</p>
+          <p>Created at: {formatDateTime(document.createdAt)}</p>
 
           {canSubmitForReview && (
             <>
@@ -248,9 +250,9 @@ function DocumentDetailPage() {
               <ul>
                 {comments.map((comment) => (
                   <li key={comment.id}>
-                    <p>Author ID: {comment.authorId}</p>
+                    <p>Author: {comment.authorName}</p>
                     <p>Content: {comment.content}</p>
-                    <p>Created At: {comment.createdAt}</p>
+                    <p>Created at: {formatDateTime(comment.createdAt)}</p>
                   </li>
                 ))}
               </ul>
@@ -305,9 +307,9 @@ function DocumentDetailPage() {
                 {decisions.map((decision) => (
                   <li key={decision.id}>
                     <p>Decision: {decision.decision}</p>
-                    <p>Decided By ID: {decision.decidedById}</p>
+                    <p>Decided by: {decision.decidedByName}</p>
                     <p>Comment: {decision.comment || '-'}</p>
-                    <p>Decided At: {decision.decidedAt}</p>
+                    <p>Decided at: {formatDateTime(decision.decidedAt)}</p>
                   </li>
                 ))}
               </ul>

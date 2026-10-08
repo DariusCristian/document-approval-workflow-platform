@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getDocuments } from '../api/documents'
 import type { Document } from '../api/documents'
+import { formatDate } from '../utils/formatDate'
 
 function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([])
@@ -60,7 +61,8 @@ function DocumentsPage() {
             <li key={document.id}>
               <Link to={`/documents/${document.id}`}>{document.title}</Link>
               <p>Status: {document.status}</p>
-              <p>Created By ID: {document.createdById}</p>
+              <p>Created by: {document.createdByName}</p>
+              <p>Created on: {formatDate(document.createdAt)}</p>
             </li>
           ))}
         </ul>

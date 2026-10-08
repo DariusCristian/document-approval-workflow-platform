@@ -48,6 +48,7 @@ public class DocumentCommentController {
         response.setId(documentComment.getId());
         response.setDocumentId(documentComment.getDocument().getId());
         response.setAuthorId(documentComment.getAuthor().getId());
+        response.setAuthorName(documentComment.getAuthor().getFullName());
         response.setContent(documentComment.getContent());
         response.setCreatedAt(documentComment.getCreatedAt());
         return response;

@@ -7,6 +7,7 @@ public class ApprovalDecisionResponse {
     private Long id;
     private Long documentId;
     private Long decidedById;
+    private String decidedByName;
     private String decision;
     private String comment;
     private LocalDateTime decidedAt;
@@ -36,6 +37,14 @@ public class ApprovalDecisionResponse {
 
     public void setDecidedById(Long decidedById) {
         this.decidedById = decidedById;
+    }
+
+    public String getDecidedByName() {
+        return decidedByName;
+    }
+
+    public void setDecidedByName(String decidedByName) {
+        this.decidedByName = decidedByName;
     }
 
     public String getDecision() {

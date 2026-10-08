@@ -68,6 +68,7 @@ public class DocumentController {
         response.setContent(document.getContent());
         response.setStatus(document.getStatus().name());
         response.setCreatedById(document.getCreatedBy().getId());
+        response.setCreatedByName(document.getCreatedBy().getFullName());
         response.setCreatedAt(document.getCreatedAt());
         return response;
     }

@@ -50,6 +50,7 @@ public class ApprovalDecisionController {
         response.setId(approvalDecision.getId());
         response.setDocumentId(approvalDecision.getDocument().getId());
         response.setDecidedById(approvalDecision.getDecidedBy().getId());
+        response.setDecidedByName(approvalDecision.getDecidedBy().getFullName());
         response.setDecision(approvalDecision.getDecision().name());
         response.setComment(approvalDecision.getComment());
         response.setDecidedAt(approvalDecision.getDecidedAt());

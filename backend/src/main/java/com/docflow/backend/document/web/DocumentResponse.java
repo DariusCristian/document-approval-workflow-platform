@@ -9,6 +9,7 @@ public class DocumentResponse {
     private String content;
     private String status;
     private Long createdById;
+    private String createdByName;
     private LocalDateTime createdAt;
 
     public DocumentResponse() {
@@ -52,6 +53,14 @@ public class DocumentResponse {
 
     public void setCreatedById(Long createdById) {
         this.createdById = createdById;
+    }
+
+    public String getCreatedByName() {
+        return createdByName;
+    }
+
+    public void setCreatedByName(String createdByName) {
+        this.createdByName = createdByName;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -6,6 +6,7 @@ export interface Document {
   content: string
   status: string
   createdById: number
+  createdByName: string
   createdAt: string
 }
 
@@ -13,6 +14,7 @@ export interface DocumentComment {
   id: number
   documentId: number
   authorId: number
+  authorName: string
   content: string
   createdAt: string
 }
@@ -21,6 +23,7 @@ export interface ApprovalDecision {
   id: number
   documentId: number
   decidedById: number
+  decidedByName: string
   decision: string
   comment: string | null
   decidedAt: string

@@ -7,6 +7,7 @@ public class DocumentCommentResponse {
     private Long id;
     private Long documentId;
     private Long authorId;
+    private String authorName;
     private String content;
     private LocalDateTime createdAt;
 
@@ -35,6 +36,14 @@ public class DocumentCommentResponse {
 
     public void setAuthorId(Long authorId) {
         this.authorId = authorId;
+    }
+
+    public String getAuthorName() {
+        return authorName;
+    }
+
+    public void setAuthorName(String authorName) {
+        this.authorName = authorName;
     }
 
     public String getContent() {

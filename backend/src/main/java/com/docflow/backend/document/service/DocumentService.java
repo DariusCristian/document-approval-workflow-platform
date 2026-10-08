@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.docflow.backend.common.exception.ForbiddenException;
 import com.docflow.backend.document.domain.Document;
@@ -24,11 +25,11 @@ public class DocumentService {
     }
 
     public List<Document> getAllDocuments() {
-        return documentRepository.findAll();
+        return documentRepository.findAllByOrderByCreatedAtDescIdDesc();
     }
 
     public Document getDocumentById(Long id) {
-        return documentRepository.findById(id)
+        return documentRepository.findWithCreatorById(id)
                 .orElseThrow(() -> new NoSuchElementException("Document not found with id: " + id));
     }
 
@@ -40,6 +41,9 @@ public class DocumentService {
         return documentRepository.save(document);
     }
 
+    // One transaction: save() then returns the same document whose author is already loaded,
+    // so the response can read the author's name after the transaction has ended.
+    @Transactional
     public Document updateStatus(Long documentId, String status, Long currentUserId) {
         Document document = getDocumentById(documentId);
 
