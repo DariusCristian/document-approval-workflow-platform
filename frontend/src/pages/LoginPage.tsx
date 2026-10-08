@@ -9,6 +9,7 @@ import Logo from '../components/layout/Logo'
 import Alert from '../components/ui/Alert'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
+import ThemeToggle from '../components/ui/ThemeToggle'
 import { inputClasses, labelClasses } from '../components/ui/formStyles'
 
 function LoginPage() {
@@ -51,7 +52,8 @@ function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center px-4 py-10">
+    <main className="relative flex min-h-svh flex-col items-center justify-center px-4 py-10">
+      <ThemeToggle className="absolute top-4 right-4" />
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <Logo />

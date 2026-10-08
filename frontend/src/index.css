@@ -2,10 +2,16 @@
 @import '@fontsource-variable/inter';
 
 /*
+ * Dark mode is class-based: dark: styles (and the dark token values below) apply when <html> has
+ * the "dark" class. The class is set by the script in index.html and by the theme toggle
+ * (src/app/theme.ts), so the user's choice can override the system setting.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
  * Design tokens: every color the app uses is named here, once.
- * Components use these names (e.g. bg-surface, text-ink-muted) instead of raw palette colors,
- * so dark mode later only needs to give these variables new values, e.g. in
- * @media (prefers-color-scheme: dark) { :root { --color-surface: ...; } }
+ * Components use these names (e.g. bg-surface, text-ink-muted) instead of raw palette colors.
+ * These are the light values; the dark block further down gives the same names dark values.
  */
 @theme {
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
@@ -15,6 +21,8 @@
   --color-surface: var(--color-white);
   --color-surface-muted: var(--color-slate-100);
   --color-line: var(--color-slate-200);
+  /* Inside form fields */
+  --color-field: var(--color-white);
 
   /* Text: headings, body, labels and meta info */
   --color-ink: var(--color-slate-900);
@@ -52,6 +60,49 @@
 @layer base {
   html {
     color-scheme: light;
+  }
+
+  /* The same token names with dark values. Everything built from tokens switches automatically. */
+  :root {
+    @variant dark {
+      color-scheme: dark;
+
+      --color-canvas: var(--color-slate-950);
+      --color-surface: var(--color-slate-900);
+      --color-surface-muted: var(--color-slate-800);
+      --color-line: var(--color-slate-800);
+      --color-field: var(--color-slate-950);
+
+      --color-ink: var(--color-slate-50);
+      --color-ink-muted: var(--color-slate-300);
+      --color-ink-subtle: var(--color-slate-400);
+
+      /* A lighter indigo, so it reads as text on dark backgrounds; buttons then get dark text. */
+      --color-accent: var(--color-indigo-400);
+      --color-accent-hover: var(--color-indigo-300);
+      --color-accent-soft: var(--color-indigo-950);
+      --color-on-accent: var(--color-slate-950);
+
+      --color-danger: var(--color-rose-400);
+      --color-danger-hover: var(--color-rose-300);
+
+      /* Statuses: a faint tint of the color as background, light text, bright dot */
+      --color-draft-bg: var(--color-slate-800);
+      --color-draft-text: var(--color-slate-300);
+      --color-draft-dot: var(--color-slate-400);
+
+      --color-review-bg: color-mix(in oklab, var(--color-amber-400) 15%, transparent);
+      --color-review-text: var(--color-amber-300);
+      --color-review-dot: var(--color-amber-400);
+
+      --color-approved-bg: color-mix(in oklab, var(--color-emerald-400) 15%, transparent);
+      --color-approved-text: var(--color-emerald-300);
+      --color-approved-dot: var(--color-emerald-400);
+
+      --color-rejected-bg: color-mix(in oklab, var(--color-rose-400) 15%, transparent);
+      --color-rejected-text: var(--color-rose-300);
+      --color-rejected-dot: var(--color-rose-400);
+    }
   }
 
   body {

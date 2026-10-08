@@ -4,6 +4,7 @@ import { useAuth } from '../../app/useAuth'
 import { cn } from '../../utils/cn'
 import Avatar from '../ui/Avatar'
 import Button from '../ui/Button'
+import ThemeToggle from '../ui/ThemeToggle'
 import Logo from './Logo'
 
 // "REVIEWER" -> "Reviewer".
@@ -76,6 +77,7 @@ function AppHeader() {
         <NavLinks className="hidden sm:flex" />
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          <ThemeToggle />
           {currentUser && (
             <div className="flex items-center gap-2.5">
               <Avatar name={currentUser.fullName} email={currentUser.email} />
