@@ -21,7 +21,7 @@ function DemoAccounts({ onSelect, disabled = false }: DemoAccountsProps) {
       aria-labelledby="demo-accounts-title"
       className="mt-6 rounded-xl border border-dashed border-line bg-surface/60 p-4"
     >
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex items-baseline justify-between gap-2 px-2">
         <h2 id="demo-accounts-title" className="text-sm font-semibold text-ink">
           Demo accounts
         </h2>
@@ -29,7 +29,7 @@ function DemoAccounts({ onSelect, disabled = false }: DemoAccountsProps) {
           Password: <code className="font-mono text-ink-muted">{DEMO_PASSWORD}</code>
         </span>
       </div>
-      <p className="mt-1 text-xs text-ink-subtle">Development only. Click one to fill in the form.</p>
+      <p className="mt-1 px-2 text-xs text-ink-subtle">Development only. Click one to fill in the form.</p>
 
       <ul className="mt-3 divide-y divide-line">
         {demoAccounts.map((account) => (

@@ -18,6 +18,7 @@ import type {
 } from '../api/documents'
 import { useAuth } from '../app/useAuth'
 import type { CurrentUser } from '../app/useAuth'
+import { usePageTitle } from '../app/usePageTitle'
 import Alert from '../components/ui/Alert'
 import Avatar from '../components/ui/Avatar'
 import Button from '../components/ui/Button'
@@ -208,6 +209,12 @@ function DocumentDetailPage() {
     !isAuthor &&
     document?.status === 'IN_REVIEW'
   const isSubmittingDecision = submittingDecision !== null
+
+  let pageTitle = document?.title ?? 'Document'
+  if (!isLoading && errorMessage) {
+    pageTitle = isNotFound ? 'Document not found' : "Couldn't load document"
+  }
+  usePageTitle(pageTitle)
 
   return (
     <main>

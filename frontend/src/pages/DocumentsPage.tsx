@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getDocuments } from '../api/documents'
 import type { Document } from '../api/documents'
+import { usePageTitle } from '../app/usePageTitle'
 import Alert from '../components/ui/Alert'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
@@ -26,6 +27,7 @@ function DocumentsPage() {
   const [errorMessage, setErrorMessage] = useState('')
   // Changing this number loads the documents again ("Try again").
   const [reloadCount, setReloadCount] = useState(0)
+  usePageTitle('Documents')
 
   // The filter lives in the URL (?status=IN_REVIEW), so it survives opening a document and going back.
   const statusParam = searchParams.get('status')

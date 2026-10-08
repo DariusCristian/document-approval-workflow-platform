@@ -1,12 +1,19 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../app/useAuth'
+import { usePageTitle } from '../app/usePageTitle'
 import { createDocument } from '../api/documents'
+import Alert from '../components/ui/Alert'
+import Button from '../components/ui/Button'
+import Card from '../components/ui/Card'
+import { buttonClasses } from '../components/ui/buttonStyles'
+import { inputClasses, labelClasses } from '../components/ui/formStyles'
 
 function CreateDocumentPage() {
   const navigate = useNavigate()
   const { currentUser } = useAuth()
+  usePageTitle('New document')
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -51,40 +58,69 @@ function CreateDocumentPage() {
   }
 
   return (
-    <main className="legacy-page">
-      <h1>Create Document</h1>
+    <main className="mx-auto max-w-2xl">
+      <Link
+        to="/documents"
+        className="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-ink-subtle hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      >
+        <span aria-hidden="true">←</span> Documents
+      </Link>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="title">Title</label>
-          <input
-            id="title"
-            name="title"
-            type="text"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            required
-          />
-        </div>
+      <h1 className="mt-4 text-2xl font-semibold tracking-tight text-ink">New document</h1>
+      <p className="mt-1 text-sm text-ink-subtle">Write it now, send it for review when it's ready.</p>
 
-        <div>
-          <label htmlFor="content">Content</label>
-          <textarea
-            id="content"
-            name="content"
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-            required
-          />
-        </div>
+      <Card className="mt-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {errorMessage && <Alert variant="error">{errorMessage}</Alert>}
+          {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating...' : 'Create Document'}
-        </button>
-      </form>
+          <div>
+            <label htmlFor="title" className={labelClasses}>
+              Title
+            </label>
+            <input
+              id="title"
+              name="title"
+              type="text"
+              placeholder="e.g. Remote Work Policy 2027"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              required
+              className={inputClasses()}
+            />
+          </div>
 
-      {successMessage && <p>{successMessage}</p>}
-      {errorMessage && <p>{errorMessage}</p>}
+          <div>
+            <label htmlFor="content" className={labelClasses}>
+              Content
+            </label>
+            <textarea
+              id="content"
+              name="content"
+              rows={12}
+              placeholder="Write the document here…"
+              aria-describedby="content-hint"
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              required
+              className={inputClasses('resize-y')}
+            />
+            <p id="content-hint" className="mt-1.5 text-xs text-ink-subtle">
+              Saved as a draft. You can submit it for review afterwards.
+            </p>
+          </div>
+
+          {/* Phone: buttons stacked, the main action on top. Laptop: side by side on the right. */}
+          <div className="flex flex-col-reverse gap-2 border-t border-line pt-5 sm:flex-row sm:justify-end">
+            <Link to="/documents" className={buttonClasses('secondary')}>
+              Cancel
+            </Link>
+            <Button type="submit" isLoading={isSubmitting}>
+              {isSubmitting ? 'Creating…' : 'Create document'}
+            </Button>
+          </div>
+        </form>
+      </Card>
     </main>
   )
 }

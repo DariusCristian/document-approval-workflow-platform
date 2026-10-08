@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../api/auth'
+import { usePageTitle } from '../app/usePageTitle'
 import { useAuth } from '../app/useAuth'
 import DemoAccounts from '../components/auth/DemoAccounts'
 import Logo from '../components/layout/Logo'
@@ -18,6 +19,7 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  usePageTitle('Sign in')
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
