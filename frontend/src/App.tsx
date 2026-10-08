@@ -1,9 +1,11 @@
-import { Link, Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { useAuth } from './app/useAuth'
 import LoginPage from './pages/LoginPage'
 import DocumentsPage from './pages/DocumentsPage'
 import DocumentDetailPage from './pages/DocumentDetailPage'
 import CreateDocumentPage from './pages/CreateDocumentPage'
+import AppHeader from './components/layout/AppHeader'
+import SessionLoadingScreen from './components/layout/SessionLoadingScreen'
 
 function RootRedirect() {
   const { currentUser } = useAuth()
@@ -16,7 +18,11 @@ function PublicOnlyRoute() {
     return <Navigate to="/documents" replace />
   }
 
-  return <Outlet />
+  return (
+    <div className="legacy-page mx-auto max-w-md px-4 py-10">
+      <Outlet />
+    </div>
+  )
 }
 
 function ProtectedRoute() {
@@ -29,36 +35,12 @@ function ProtectedRoute() {
 }
 
 function ProtectedLayout() {
-  const navigate = useNavigate()
-  const { logout, currentUser } = useAuth()
-
-  const handleLogout = async () => {
-    await logout()
-    navigate('/login', { replace: true })
-  }
-
   return (
     <>
-      <header>
-        <nav>
-          <Link to="/documents">Documents</Link> |{' '}
-          <Link to="/documents/create">Create Document</Link>
-        </nav>
-        {currentUser && (
-          <p>
-            Signed in as {currentUser.email} ({currentUser.role})
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={() => {
-            void handleLogout()
-          }}
-        >
-          Logout
-        </button>
-      </header>
-      <Outlet />
+      <AppHeader />
+      <div className="legacy-page mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+        <Outlet />
+      </div>
     </>
   )
 }
@@ -68,7 +50,7 @@ function App() {
 
   // Wait for the session check, so routes don't briefly show the wrong page.
   if (isCheckingSession) {
-    return <p>Loading...</p>
+    return <SessionLoadingScreen />
   }
 
   return (
