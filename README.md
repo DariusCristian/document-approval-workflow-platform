@@ -34,7 +34,8 @@ DRAFT ──(author submits)──> IN_REVIEW ──(reviewer/admin decides)─�
 | Spring Security 7 (sessions, CSRF) | Vite 8 (dev server proxies `/api` to the backend) |
 | Spring Data JPA, Hibernate | React Router 7 |
 | PostgreSQL, Flyway | ESLint |
-| Gradle | |
+| Gradle | Vitest, React Testing Library |
+| JUnit 5, Testcontainers, MockMvc, JaCoCo | |
 
 ## Project structure
 
@@ -42,8 +43,8 @@ DRAFT ──(author submits)──> IN_REVIEW ──(reviewer/admin decides)─�
 .
 ├── backend/                     Spring Boot app (Java package: com.docflow.backend)
 │   ├── build.gradle
-│   └── src/main/
-│       ├── java/com/docflow/backend/
+│   └── src/
+│       ├── main/java/com/docflow/backend/
 │       │   ├── approval/        approval decisions (domain, repository, service, web)
 │       │   ├── auth/web/        login, logout, /me, CSRF token endpoint
 │       │   ├── comment/         document comments
@@ -52,14 +53,17 @@ DRAFT ──(author submits)──> IN_REVIEW ──(reviewer/admin decides)─�
 │       │   ├── document/        documents and status changes
 │       │   ├── security/        UserDetailsService and principal
 │       │   └── user/            users and roles
-│       └── resources/
-│           ├── application.yml
-│           └── db/migration/    Flyway migrations V1–V5
+│       ├── main/resources/
+│       │   ├── application.yml
+│       │   └── db/migration/    Flyway migrations V1–V5
+│       └── test/java/com/docflow/backend/
+│           └── support/         shared test base class (Testcontainers) and test data helper
 ├── frontend/                    React app
 │   └── src/
 │       ├── api/                 fetch client (CSRF header, 401 handling) and API calls
 │       ├── app/                 AuthProvider and useAuth
-│       └── pages/               Login, Documents, Create Document, Document Detail
+│       ├── pages/               Login, Documents, Create Document, Document Detail
+│       └── test/setup.ts        Vitest setup (tests sit next to the code as *.test.ts(x))
 └── scripts/
     └── reset-db.sh              resets the local database
 ```
@@ -106,6 +110,38 @@ All demo accounts use the password `password123`.
 
 The seed data has one document in each status, including an IN_REVIEW document written by the reviewer. You can use it to try the four-eyes rule.
 
+## Tests
+
+### Running the tests
+```bash
+cd backend
+./gradlew test      # needs Docker running (e.g. Docker Desktop or OrbStack)
+```
+- The backend tests start their own PostgreSQL in a Docker container (Testcontainers). They never touch `docflow_db`, and the `dev` profile and demo data seeder don't run.
+- One container is shared by all test classes, and every table is emptied before each test, so each test only sees the data it creates.
+- Coverage report: `backend/build/reports/jacoco/test/html/index.html` (written by `./gradlew test`).
+
+```bash
+cd frontend
+npm test            # run once
+npm run test:watch  # re-run on file changes
+```
+The frontend tests need no backend: API calls are mocked.
+
+### What is tested
+**Backend**
+- **Status rules** (unit test, no Spring): only `DRAFT → IN_REVIEW` is allowed through the status endpoint, and APPROVED and REJECTED are final.
+- **Authentication:** `401` without login, login with a correct or wrong password, `/api/auth/me`, logout ending the session, `400` for empty login fields.
+- **CSRF:** requests without a token or with a wrong token get `403`. A real token from `/api/auth/csrf` works only when it is sent back in the header.
+- **Identity:** fake `createdById`, `authorId` or `decidedById` values in request bodies are ignored, and the logged-in user is used.
+- **Role rules:** authors can't decide, nobody decides on their own document (admins included), reviewers and admins can decide on others' documents, and only admins create users.
+- **Workflow:** only the author submits a draft, APPROVED and REJECTED can't be set through the status endpoint, decisions only work on IN_REVIEW documents, and a decision updates the status and the history.
+- **Responses:** author and decider names are filled in, the documents list is newest first, a missing document gives `404`, and validation errors use the JSON error shape.
+
+**Frontend**
+- `formatDate` and `formatDateTime`, and the status labels.
+- The document detail page shows the right actions for each user: the author on a draft, a reviewer or admin on someone else's document in review, and a reviewer or admin on their own document.
+
 ## Security design
 
 ### Session-based authentication
@@ -149,6 +185,6 @@ The services enforce these rules. A violation returns `403` with a clear message
 - `GET /api/auth/csrf` hands out a token before the first login. The token is renewed on login and logout.
 
 ## Next steps
-- **Tests:** there is only a Spring context-load test so far. Add integration tests for the role rules, the four-eyes rule and CSRF.
+- **End-to-end tests** (e.g. Playwright) that drive the real frontend against the real backend.
 - **Docker Compose** for PostgreSQL, the backend and the frontend.
 - **UI redesign:** the current frontend only has the Vite template's base styles.
