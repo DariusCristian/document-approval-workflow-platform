@@ -51,7 +51,7 @@ function CreateDocumentPage() {
   }
 
   return (
-    <main>
+    <main className="legacy-page">
       <h1>Create Document</h1>
 
       <form onSubmit={handleSubmit}>

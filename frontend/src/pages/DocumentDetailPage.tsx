@@ -191,7 +191,7 @@ function DocumentDetailPage() {
     document?.status === 'IN_REVIEW'
 
   return (
-    <main>
+    <main className="legacy-page">
       <h1>Document Detail Page</h1>
       {isLoading && <p>Loading document details...</p>}
       {errorMessage && <p>{errorMessage}</p>}
